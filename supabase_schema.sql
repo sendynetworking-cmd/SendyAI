@@ -8,7 +8,6 @@ CREATE TABLE profiles (
     phone TEXT,
     university JSONB, -- Stored as array/list
     degree JSONB,     -- Stored as array/list
-    designition JSONB, -- Stored as array/list (legacy)
     experiences JSONB, -- Stored as array of objects (Title, Company, Dates, Desc)
     skills JSONB,     -- Stored as array/list
     total_exp NUMERIC,

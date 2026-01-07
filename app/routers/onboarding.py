@@ -151,7 +151,6 @@ async def parse_resume(file: UploadFile = File(...)):
             "phone": phone,
             "university": universities[:2],
             "degree": degrees[:2],
-            "designition": [e['title'] for e in experiences[:5]],
             "experiences": experiences[:5],
             "skills": found_skills[:15],
             "total_exp": 0,

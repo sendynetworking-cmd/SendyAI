@@ -58,8 +58,7 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
 
         return {
             "success": True,
-            "email": response.text,
-            "model": settings.GEMINI_MODEL
+            "email": response.text
         }
     except Exception as e:
         logger.error(f"Generation error: {e}")

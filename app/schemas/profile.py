@@ -14,7 +14,6 @@ class ProfileUpdate(BaseModel):
     phone: Optional[str] = None
     university: Optional[List[str]] = []
     degree: Optional[List[str]] = []
-    designition: Optional[List[str]] = []
     experiences: Optional[List[WorkExperience]] = []
     skills: Optional[List[str]] = []
     total_exp: Optional[float] = 0.0
