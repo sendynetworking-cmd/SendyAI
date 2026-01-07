@@ -428,15 +428,19 @@ async def find_email(req: dict, user_id: str = Depends(get_user_id)):
         except Exception as e:
             logger.error(f"Hunter error: {e}")
 
-    # Log usage
+    # Log usage (wrapped in try-except to avoid failing the whole request)
     if email:
-        supabase.table("usage_logs").insert({
-            "user_id": user_id,
-            "action": "find_email",
-            "provider": "hunter",
-            "success": True,
-            "metadata": {"linkedin_url": linkedin_url}
-        }).execute()
+        try:
+            supabase.table("usage_logs").insert({
+                "user_id": user_id,
+                "action": "find_email",
+                "provider": "hunter",
+                "success": True,
+                "metadata": {"linkedin_url": linkedin_url}
+            }).execute()
+        except Exception as log_err:
+            logger.warning(f"Failed to log search usage: {log_err}")
+        
         return {"email": email, "provider": "hunter", "success": True}
     else:
         return {"email": "Not found", "success": False}
