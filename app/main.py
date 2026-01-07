@@ -352,8 +352,20 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     user = user_profile.data
     recipient = req.profileData
 
-    # DEBUG: Using a tiny prompt to test if size is causing 429s
-    system_prompt = "Say 'Hello from Test Prompt' and nothing else."
+    # PRUNING: Avoid 429s by limiting input size
+    summary = user.get('raw_summary', '')[:500]
+    skills = ', '.join(user.get('skills', [])[:10])
+    headline = recipient.get('headline', '')[:150]
+
+    system_prompt = f"""
+    Draft a personalized outreach email.
+    SENDER: {user['name']}
+    SENDER BACKGROUND: {summary}
+    SENDER SKILLS: {skills}
+    RECIPIENT: {recipient.get('name')}
+    RECIPIENT ROLE: {headline}
+    Output ONLY THE SUBJECT AND BODY.
+    """
 
     try:
         response = genai_client.models.generate_content(
@@ -384,8 +396,11 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
 @app.post("/api/find-email")
 async def find_email(req: dict, user_id: str = Depends(get_user_id)):
     linkedin_url = req.get("linkedinUrl")
-    if not linkedin_url:
-        raise HTTPException(status_code=400, detail="Missing LinkedIn URL")
+    full_name = req.get("fullName")
+    company = req.get("company")
+    
+    if not linkedin_url and not (full_name and company):
+        raise HTTPException(status_code=400, detail="Missing Search Parameters")
     
     email = None
 
@@ -393,13 +408,23 @@ async def find_email(req: dict, user_id: str = Depends(get_user_id)):
     hunter_key = os.getenv("HUNTER_API_KEY")
     if hunter_key:
         try:
-            logger.info(f"Attempting Hunter lookup for {linkedin_url}")
-            hunter_url = f"https://api.hunter.io/v2/email-finder?linkedin_url={linkedin_url}&api_key={hunter_key}"
-            h_res = py_requests.get(hunter_url, timeout=10)
+            logger.info(f"Hunter lookup for {full_name} at {company} (URL: {linkedin_url})")
+            
+            # Prefer Name + Company as per Hunter V2 documentation
+            params = {"api_key": hunter_key}
+            if full_name and company:
+                params["full_name"] = full_name
+                params["company"] = company
+            elif linkedin_url:
+                params["linkedin_url"] = linkedin_url
+            
+            hunter_url = "https://api.hunter.io/v2/email-finder"
+            h_res = py_requests.get(hunter_url, params=params, timeout=10)
             h_data = h_res.json()
             
             if h_data.get("data") and h_data["data"].get("email"):
                 email = h_data["data"]["email"]
+                logger.info(f"Hunter found email: {email}")
         except Exception as e:
             logger.error(f"Hunter error: {e}")
 
