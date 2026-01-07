@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.8-slim-buster
 
 # Install system dependencies for resume parsing
 RUN apt-get update && apt-get install -y \
@@ -11,6 +11,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
+
+# Pin setuptools to a version still including distutils (crucial for spaCy 2.x builds)
+RUN pip install --no-cache-dir "setuptools<58.0.0" "pip<23.1" wheel
 
 # Copy requirements and install
 COPY requirements.txt .
