@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
 
 supabase: Optional[Client] = None
 genai_client: Optional[GenAIClient] = None
@@ -150,10 +151,10 @@ async def parse_resume(file: UploadFile = File(...)):
         {text}
         """
         
-        logger.info(f"Sending prompt to Gemini for parsing...")
-        # Note: Using 'gemini-2.5-flash' as requested
+        logger.info(f"Sending prompt to Gemini ({GEMINI_MODEL}) for parsing...")
+        # Note: Using the model configured via environment variables
         response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=GEMINI_MODEL,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -229,7 +230,7 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
 
     try:
         response = genai_client.models.generate_content(
-            model="gemini-2.5-flash",
+            model=GEMINI_MODEL,
             contents=system_prompt
         )
         
@@ -238,7 +239,7 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
             supabase.table("usage_logs").insert({
                 "user_id": user_id,
                 "action": "generate_email",
-                "model": "gemini-2.5-flash"
+                "model": GEMINI_MODEL
             }).execute()
         except Exception as log_err:
             logger.warning(f"Failed to log usage: {log_err}")
@@ -246,7 +247,7 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
         return {
             "success": True,
             "email": response.text,
-            "model": "gemini-2.5-flash"
+            "model": GEMINI_MODEL
         }
     except Exception as e:
         logger.error(f"Generation error: {e}")
