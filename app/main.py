@@ -1,12 +1,4 @@
 import os
-import sys
-
-# Absolute Top Diagnostic (runs before anything else)
-print("--- STARTUP DIAGNOSTIC: ALL ENV KEYS ---", flush=True)
-for key in sorted(os.environ.keys()):
-    print(f"DIAGNOSTIC_ENV: {key}", flush=True)
-print("--- END STARTUP DIAGNOSTIC ---", flush=True)
-
 import logging
 from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException, Depends
@@ -159,8 +151,9 @@ async def parse_resume(file: UploadFile = File(...)):
         """
         
         logger.info(f"Sending prompt to Gemini for parsing...")
+        # Note: Using 'gemini-2.5-flash' as requested
         response = genai_client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json"
@@ -236,24 +229,29 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
 
     try:
         response = genai_client.models.generate_content(
-            model="gemini-1.5-flash",
+            model="gemini-2.5-flash",
             contents=system_prompt
         )
         
-        supabase.table("usage_logs").insert({
-            "user_id": user_id,
-            "action": "generate_email",
-            "model": "gemini-1.5-flash"
-        }).execute()
-        
+        # Log usage to Supabase
+        try:
+            supabase.table("usage_logs").insert({
+                "user_id": user_id,
+                "action": "generate_email",
+                "model": "gemini-2.5-flash"
+            }).execute()
+        except Exception as log_err:
+            logger.warning(f"Failed to log usage: {log_err}")
+
         return {
             "success": True,
             "email": response.text,
-            "model": "gemini-1.5-flash"
+            "model": "gemini-2.5-flash"
         }
     except Exception as e:
         logger.error(f"Generation error: {e}")
-        raise HTTPException(status_code=500, detail="AI generation failed")
+        logger.error(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"AI generation failed: {str(e)}")
 
 @app.post("/api/find-email")
 async def find_email(req: dict, user_id: str = Depends(get_user_id)):
