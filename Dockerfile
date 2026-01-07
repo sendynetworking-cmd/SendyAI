@@ -29,8 +29,12 @@ RUN python -m nltk.downloader stopwords \
 # Copy application code
 COPY . .
 
+# Ensure the app directory is in PYTHONPATH
+ENV PYTHONPATH=/app
+
 # Expose port (Railway will override this with $PORT)
 EXPOSE 8080
 
-# Run the application using the $PORT environment variable
-CMD uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}
+# Run the application using shell form to ensure $PORT expansion works correctly
+# We use the list form with sh -c for better portability
+CMD sh -c "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8080}"

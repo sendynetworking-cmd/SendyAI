@@ -20,6 +20,27 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Validate Essential Environment Variables
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+
+if not all([SUPABASE_URL, SUPABASE_KEY, GEMINI_KEY]):
+    logger.error("CRITICAL: Missing required environment variables (SUPABASE_URL, SUPABASE_KEY, or GEMINI_API_KEY)")
+    # We don't exit here to allow help check / etc, but we'll error on requests
+    supabase = None
+    genai_configured = False
+else:
+    try:
+        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+        genai.configure(api_key=GEMINI_KEY)
+        genai_configured = True
+        logger.info("Clients initialized successfully")
+    except Exception as e:
+        logger.error(f"Failed to initialize clients: {e}")
+        supabase = None
+        genai_configured = False
+
 app = FastAPI(title="Sendy AI Backend")
 
 # CORS
@@ -31,9 +52,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Clients
-supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+# ... rest of the app initialization ...
 
 # Models matching resume-parser output
 class ProfileUpdate(BaseModel):
