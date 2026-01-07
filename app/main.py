@@ -352,18 +352,8 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     user = user_profile.data
     recipient = req.profileData
 
-    system_prompt = f"""
-    You are an expert networking assistant. Draft an outreach email.
-    
-    SENDER: {user['name']}
-    SENDER BACKGROUND: {user['raw_summary']}
-    SENDER SKILLS: {', '.join(user.get('skills', []))}
-    
-    RECIPIENT: {recipient.get('name')}
-    RECIPIENT ROLE: {recipient.get('headline')}
-    
-    Output ONLY the subject and body. No placeholders.
-    """
+    # DEBUG: Using a tiny prompt to test if size is causing 429s
+    system_prompt = "Say 'Hello from Test Prompt' and nothing else."
 
     try:
         response = genai_client.models.generate_content(
