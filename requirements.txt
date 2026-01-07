@@ -1,6 +1,8 @@
 fastapi
 uvicorn[standard]
-resume-parser
+pypdf
+pdfplumber
+python-docx
 spacy
 supabase
 python-dotenv

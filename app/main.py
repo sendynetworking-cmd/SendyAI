@@ -11,19 +11,44 @@ from google.auth.transport import requests
 import requests as py_requests
 from supabase import create_client, Client
 from dotenv import load_dotenv
-import shutil
-import tempfile
-import json
-import traceback
 import re
-import nltk
-from resume_parser import resumeparse
+import spacy
+import pdfplumber
+from docx import Document
 
 load_dotenv()
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Initialize Spacy 3
+try:
+    nlp = spacy.load("en_core_web_sm")
+    logger.info("Spacy model 'en_core_web_sm' loaded successfully")
+except Exception as e:
+    logger.error(f"Failed to load Spacy model: {e}")
+    nlp = None
+
+def extract_text_from_pdf(path):
+    text = ""
+    try:
+        with pdfplumber.open(path) as pdf:
+            for page in pdf.pages:
+                page_text = page.extract_text()
+                if page_text:
+                    text += page_text + "\n"
+    except Exception as e:
+        logger.error(f"Error extracting PDF text: {e}")
+    return text
+
+def extract_text_from_docx(path):
+    try:
+        doc = Document(path)
+        return "\n".join(p.text for p in doc.paragraphs)
+    except Exception as e:
+        logger.error(f"Error extracting DOCX text: {e}")
+        return ""
 
 # Validate Essential Environment Variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -123,25 +148,96 @@ async def parse_resume(file: UploadFile = File(...)):
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # Use resume-parser to extract info
-        # It handles PDF and DOCX internally using spacy/nltk
-        logger.info(f"Parsing resume with resume-parser: {file.filename}")
-        data = resumeparse.read_file(temp_path)
+        # 1. Extract raw text based on file type
+        text = ""
+        if file.filename.lower().endswith(".pdf"):
+            text = extract_text_from_pdf(temp_path)
+        elif file.filename.lower().endswith((".docx", ".doc")):
+            text = extract_text_from_docx(temp_path)
+        else:
+            raise HTTPException(status_code=400, detail="Unsupported file format. Please upload PDF or DOCX.")
+
+        if not text.strip():
+            raise ValueError("Could not extract any text from the file.")
+
+        # 2. Super Parsing using Spacy 3 and Regex
+        doc = nlp(text) if nlp else None
         
-        # Ensure fields match what the frontend expects
+        # Name extraction (Heuristic: First Person entity that looks like a name)
+        name = ""
+        if doc:
+            for ent in doc.ents:
+                if ent.label_ == "PERSON" and len(ent.text.split()) >= 2:
+                    name = ent.text
+                    break
+        
+        # Email extraction (Regex)
+        email = ""
+        email_match = re.search(r'[\w\.-]+@[\w\.-]+', text)
+        if email_match:
+            email = email_match.group(0)
+
+        # Phone extraction (Regex)
+        phone = ""
+        phone_match = re.search(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', text)
+        if phone_match:
+            phone = phone_match.group(0)
+
+        # Skills (Keyword matching with modern list)
+        COMMON_SKILLS = [
+            "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", "Node.js", 
+            "HTML", "CSS", "SQL", "NoSQL", "PostgreSQL", "MongoDB", "AWS", "Azure", "GCP", 
+            "Docker", "Kubernetes", "Git", "CI/CD", "Machine Learning", "Data Analysis", 
+            "C++", "C#", "Go", "Rust", "Swift", "Kotlin", "Flutter", "FastAPI", "Django", "Flask",
+            "Next.js", "Tailwind", "REST API", "GraphQL", "PyTorch", "TensorFlow", "Pandas", "Scikit-Learn"
+        ]
+        found_skills = []
+        text_lower = text.lower()
+        for skill in COMMON_SKILLS:
+            if re.search(rf"\b{re.escape(skill.lower())}\b", text_lower):
+                found_skills.append(skill)
+
+        # University/Education
+        universities = []
+        if doc:
+            for ent in doc.ents:
+                if ent.label_ == "ORG" and any(term in ent.text for term in ["University", "College", "Institute", "School", "Polytechnic"]):
+                    if ent.text not in universities:
+                        universities.append(ent.text)
+        
+        # Degree
+        degrees = []
+        COMMON_DEGREES = ["Bachelor", "Master", "PhD", "B.Sc", "M.Sc", "B.A", "M.A", "B.Tech", "M.Tech", "MBA", "Associate"]
+        for d in COMMON_DEGREES:
+            if d.lower() in text_lower:
+                degrees.append(d)
+
+        # Designation/Roles
+        designations = []
+        COMMON_TITLES = ["Engineer", "Developer", "Manager", "Analyst", "Lead", "Architect", "Scientist", "Consultant", "Designer"]
+        if doc:
+            # Look for lines containing common titles
+            lines = text.split('\n')
+            for line in lines[:20]: # Only check first 20 lines for title
+                if any(title in line for title in COMMON_TITLES):
+                    if len(line.strip()) < 100:
+                        designations.append(line.strip())
+                        break
+
+        # Map to final response
         response_data = {
-            "name": data.get("name", ""),
-            "email": data.get("email", ""),
-            "phone": data.get("phone", ""),
-            "university": data.get("university", []),
-            "degree": data.get("degree", []),
-            "designition": data.get("designition", []),
-            "skills": data.get("skills", []),
-            "total_exp": data.get("total_exp", 0),
-            "raw_summary": f"Extracted profile for {data.get('name', 'User')}."
+            "name": name,
+            "email": email,
+            "phone": phone,
+            "university": universities[:2],
+            "degree": degrees[:2],
+            "designition": designations[:1],
+            "skills": found_skills[:15],
+            "total_exp": 0,
+            "raw_summary": f"Professional profile with {len(found_skills)} skills extracted via Super Parser."
         }
         
-        logger.info(f"Successfully parsed resume: {response_data['name']}")
+        logger.info(f"Successfully Super Parsed resume: {name}")
         return response_data
 
     except Exception as e:
