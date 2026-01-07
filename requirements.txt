@@ -1,0 +1,15 @@
+fastapi
+uvicorn[standard]
+resume-parser
+supabase
+python-dotenv
+google-generativeai
+google-auth
+pydantic
+python-multipart
+spacy
+nltk
+# spacy model download will be handled in the Dockerfile or startup script
+# python -m spacy download en_core_web_sm
+# python -m nltk.downloader words
+# python -m nltk.downloader stopwords

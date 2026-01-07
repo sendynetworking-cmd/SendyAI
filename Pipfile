@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = "*"
+pyresparser = "*"
+supabase = "*"
+python-dotenv = "*"
+google-generativeai = "*"
+pydantic = "*"
+python-multipart = "*"
+spacy = "*"
+nltk = "*"
+# spacy model download will be handled in the Dockerfile or startup script = "*"
+# python -m spacy download en_core_web_sm = "*"
+# python -m nltk.downloader words = "*"
+# python -m nltk.downloader stopwords = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.10"

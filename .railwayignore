@@ -1,0 +1,17 @@
+# Railway Ignore
+.git
+node_modules
+__pycache__
+*.pyc
+.env
+.idea
+.vscode
+*.zip
+*.crx
+# Extension files (excluding backend)
+manifest.json
+*.html
+*.js (except for backend files if any)
+*.css
+icons/
+_metadata/
