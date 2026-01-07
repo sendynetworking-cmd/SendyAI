@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
 supabase: Optional[Client] = None
 genai_client: Optional[GenAIClient] = None
@@ -41,16 +41,7 @@ else:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         genai_client = GenAIClient(api_key=GEMINI_KEY)
-        logger.info("Clients (Supabase & Gemini) initialized successfully")
-        
-        # Diagnostic: List Available Models
-        try:
-            logger.info("--- AVAILABLE MODELS ---")
-            for m in genai_client.models.list():
-                logger.info(f"MODEL: {m.name}")
-            logger.info("------------------------")
-        except Exception as list_err:
-            logger.warning(f"Could not list models: {list_err}")
+        logger.info(f"Clients (Supabase & Gemini {GEMINI_MODEL}) initialized successfully")
 
     except Exception as e:
         logger.error(f"Failed to initialize clients: {e}")
