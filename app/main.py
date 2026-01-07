@@ -4,7 +4,8 @@ from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-import google.generativeai as genai
+from google.genai import Client as GenAIClient
+from google.genai import types
 from google.oauth2 import id_token
 from google.auth.transport import requests
 import requests as py_requests
@@ -24,21 +25,18 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 
+supabase: Optional[Client] = None
+genai_client: Optional[GenAIClient] = None
+
 if not all([SUPABASE_URL, SUPABASE_KEY, GEMINI_KEY]):
     logger.error("CRITICAL: Missing required environment variables (SUPABASE_URL, SUPABASE_KEY, or GEMINI_API_KEY)")
-    # We don't exit here to allow help check / etc, but we'll error on requests
-    supabase = None
-    genai_configured = False
 else:
     try:
-        supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        genai.configure(api_key=GEMINI_KEY)
-        genai_configured = True
+        supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
+        genai_client = GenAIClient(api_key=GEMINI_KEY)
         logger.info("Clients initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize clients: {e}")
-        supabase = None
-        genai_configured = False
 
 app = FastAPI(title="Sendy AI Backend")
 
@@ -50,8 +48,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# ... rest of the app initialization ...
 
 # Models matching resume-parser output
 class ProfileUpdate(BaseModel):
@@ -82,7 +78,6 @@ async def get_user_id(authorization: Optional[str] = Header(None)):
             os.getenv("GOOGLE_CLIENT_ID")
         )
 
-        # The 'sub' field is the unique Google User ID
         return idinfo['sub']
     except Exception as e:
         logger.error(f"Token verification failed: {e}")
@@ -94,7 +89,7 @@ async def root():
 
 @app.post("/onboarding/parse")
 async def parse_resume(file: UploadFile = File(...)):
-    if not genai_configured:
+    if not genai_client:
         raise HTTPException(status_code=500, detail="Gemini API not configured")
         
     temp_dir = tempfile.mkdtemp()
@@ -115,7 +110,6 @@ async def parse_resume(file: UploadFile = File(...)):
             raise ValueError("Could not extract text from PDF")
 
         # 2. Use Gemini to Parse
-        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
         Extract the professional profile from this resume text into the following JSON format:
         {{
@@ -134,12 +128,15 @@ async def parse_resume(file: UploadFile = File(...)):
         {text}
         """
         
-        response = model.generate_content(prompt)
-        # Clean response if it contains markdown code blocks
-        json_str = response.text.replace("```json", "").replace("```", "").strip()
+        response = genai_client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                response_mime_type="application/json"
+            )
+        )
         
-        import json
-        return json.loads(json_str)
+        return response.parsed
         
     except Exception as e:
         logger.error(f"Parsing error: {e}")
@@ -149,8 +146,10 @@ async def parse_resume(file: UploadFile = File(...)):
 
 @app.post("/user/profile")
 async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_id)):
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
     try:
-        data = supabase.table("profiles").upsert({
+        supabase.table("profiles").upsert({
             "id": user_id,
             "name": profile.name,
             "email": profile.email,
@@ -170,6 +169,9 @@ async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_i
 
 @app.post("/outreach/generate")
 async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_user_id)):
+    if not supabase or not genai_client:
+        raise HTTPException(status_code=500, detail="Services not configured")
+
     user_profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
     if not user_profile.data:
         raise HTTPException(status_code=400, detail="User profile not set up")
@@ -191,9 +193,10 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     """
 
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
-        # ... generation logic ...
-        response = model.generate_content(system_prompt)
+        response = genai_client.models.generate_content(
+            model="gemini-1.5-flash",
+            contents=system_prompt
+        )
         
         supabase.table("usage_logs").insert({
             "user_id": user_id,

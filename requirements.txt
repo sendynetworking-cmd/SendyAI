@@ -3,7 +3,7 @@ uvicorn[standard]
 pypdf
 supabase
 python-dotenv
-google-generativeai
+google-genai
 google-auth
 pydantic
 python-multipart
