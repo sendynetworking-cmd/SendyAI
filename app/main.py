@@ -90,13 +90,21 @@ app.add_middleware(
 )
 
 # Models matching resume-parser output
+class WorkExperience(BaseModel):
+    title: Optional[str] = ""
+    company: Optional[str] = ""
+    start_date: Optional[str] = ""
+    end_date: Optional[str] = ""
+    description: Optional[str] = ""
+
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
     phone: Optional[str] = None
     university: Optional[List[str]] = []
     degree: Optional[List[str]] = []
-    designition: Optional[List[str]] = []
+    designition: Optional[List[str]] = [] # Keeping for backward compatibility
+    experiences: Optional[List[WorkExperience]] = []
     skills: Optional[List[str]] = []
     total_exp: Optional[float] = 0.0
     raw_summary: Optional[str] = ""
@@ -216,17 +224,65 @@ async def parse_resume(file: UploadFile = File(...)):
             if d.lower() in text_lower:
                 degrees.append(d)
 
-        # Designation/Roles
+        # Designation/Roles (Legacy backup)
         designations = []
-        COMMON_TITLES = ["Engineer", "Developer", "Manager", "Analyst", "Lead", "Architect", "Scientist", "Consultant", "Designer"]
+        COMMON_TITLES = ["Engineer", "Developer", "Manager", "Analyst", "Lead", "Architect", "Scientist", "Consultant", "Designer", "Specialist"]
+        
+        # 3. Enhanced Experience Extraction (Hierarchical)
+        experiences = []
         if doc:
-            # Look for lines containing common titles
+            # Look for experience-like blocks (Title, Company, Date ranges)
+            date_range_pattern = r'((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|(?:\d{1,2}/\d{2,4}))\s*(?:-|–|to)\s*((?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{4}|(?:\d{1,2}/\d{2,4})|Present|Current)'
+            
             lines = text.split('\n')
-            for line in lines[:20]: # Only check first 20 lines for title
-                if any(title in line for title in COMMON_TITLES):
-                    if len(line.strip()) < 100:
-                        designations.append(line.strip())
-                        break
+            current_exp = None
+            
+            for i, line in enumerate(lines):
+                line = line.strip()
+                if not line: continue
+                
+                # Check for date ranges - often marks a new experience entry
+                date_match = re.search(date_range_pattern, line, re.IGNORECASE)
+                
+                # Check for common titles
+                has_title = any(re.search(rf"\b{re.escape(title)}\b", line, re.IGNORECASE) for title in COMMON_TITLES)
+                
+                if date_match or (has_title and len(line) < 100):
+                    # Potential new experience block
+                    if current_exp and (current_exp['title'] or current_exp['company']):
+                        experiences.append(current_exp)
+                    
+                    # Try to separate title and company if on same line
+                    # Heuristic: Spacy ORG is usually the company
+                    line_doc = nlp(line)
+                    company = ""
+                    title = line
+                    
+                    for ent in line_doc.ents:
+                        if ent.label_ == "ORG":
+                            company = ent.text
+                            title = line.replace(company, "").strip(",- ").strip()
+                            break
+                    
+                    # If date is in the same line, strip it from title
+                    if date_match:
+                        title = title.replace(date_match.group(0), "").strip(",- ").strip()
+                    
+                    current_exp = {
+                        "title": title[:100] if title else "Team Member",
+                        "company": company[:100] if company else "Company",
+                        "start_date": date_match.group(1) if date_match else "",
+                        "end_date": date_match.group(2) if date_match else "",
+                        "description": ""
+                    }
+                elif current_exp:
+                    # Append to description of the current experience
+                    if len(current_exp["description"]) < 500: # Cap description length
+                        current_exp["description"] += line + " "
+
+            # Add last one
+            if current_exp and (current_exp['title'] or current_exp['company']):
+                experiences.append(current_exp)
 
         # Map to final response
         response_data = {
@@ -235,13 +291,14 @@ async def parse_resume(file: UploadFile = File(...)):
             "phone": phone,
             "university": universities[:2],
             "degree": degrees[:2],
-            "designition": designations[:1],
+            "designition": [e['title'] for e in experiences[:5]], # Backwards compatibility
+            "experiences": experiences[:5], # Limit to top 5
             "skills": found_skills[:15],
             "total_exp": 0,
-            "raw_summary": f"Professional profile with {len(found_skills)} skills extracted via Super Parser."
+            "raw_summary": f"Professional profile with {len(experiences)} roles identified."
         }
         
-        logger.info(f"Successfully Super Parsed resume: {name}")
+        logger.info(f"Successfully Super Parsed resume: {name} with {len(experiences)} experiences")
         return response_data
 
     except Exception as e:
