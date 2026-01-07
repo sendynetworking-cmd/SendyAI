@@ -36,6 +36,7 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
             
             hunter_url = "https://api.hunter.io/v2/email-finder"
             h_res = py_requests.get(hunter_url, params=params, timeout=10)
+            logger.info(f"Hunter lookup URL: {h_res.url}")
             logger.info(f"Hunter response status: {h_res.status_code}")
             
             h_data = h_res.json()
