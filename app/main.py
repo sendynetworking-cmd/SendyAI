@@ -13,6 +13,8 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 import shutil
 import tempfile
+import json
+import traceback
 
 load_dotenv()
 
@@ -128,6 +130,7 @@ async def parse_resume(file: UploadFile = File(...)):
         {text}
         """
         
+        logger.info(f"Sending prompt to Gemini for parsing...")
         response = genai_client.models.generate_content(
             model="gemini-1.5-flash",
             contents=prompt,
@@ -136,10 +139,15 @@ async def parse_resume(file: UploadFile = File(...)):
             )
         )
         
-        return response.parsed
+        try:
+            return json.loads(response.text)
+        except Exception as json_err:
+            logger.error(f"Failed to parse Gemini JSON output: {response.text}")
+            raise ValueError("Invalid JSON format from AI")
         
     except Exception as e:
         logger.error(f"Parsing error: {e}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
     finally:
         shutil.rmtree(temp_dir)
@@ -169,12 +177,18 @@ async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_i
 
 @app.post("/outreach/generate")
 async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_user_id)):
+    logger.info(f"Generating outreach for user: {user_id}")
     if not supabase or not genai_client:
         raise HTTPException(status_code=500, detail="Services not configured")
 
-    user_profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
-    if not user_profile.data:
-        raise HTTPException(status_code=400, detail="User profile not set up")
+    try:
+        user_profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+        if not user_profile.data:
+            logger.warning(f"Profile not found for user_id: {user_id}")
+            raise HTTPException(status_code=400, detail="User profile not set up. Please complete onboarding in the extension options.")
+    except Exception as e:
+        logger.error(f"Supabase lookup error for {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Database lookup failed")
     
     user = user_profile.data
     recipient = req.profileData
