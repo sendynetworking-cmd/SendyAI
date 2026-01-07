@@ -7,7 +7,6 @@ spacy
 supabase
 python-dotenv
 google-genai
-google-auth
 pydantic
 pydantic-settings
 python-multipart
