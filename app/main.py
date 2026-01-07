@@ -30,13 +30,17 @@ GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 supabase: Optional[Client] = None
 genai_client: Optional[GenAIClient] = None
 
+if not SUPABASE_URL: logger.error("MISSING: SUPABASE_URL")
+if not SUPABASE_KEY: logger.error("MISSING: SUPABASE_KEY")
+if not GEMINI_KEY: logger.error("MISSING: GEMINI_API_KEY")
+
 if not all([SUPABASE_URL, SUPABASE_KEY, GEMINI_KEY]):
-    logger.error("CRITICAL: Missing required environment variables (SUPABASE_URL, SUPABASE_KEY, or GEMINI_API_KEY)")
+    logger.error("CRITICAL: Missing required environment variables. Application will fail on key endpoints.")
 else:
     try:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         genai_client = GenAIClient(api_key=GEMINI_KEY)
-        logger.info("Clients initialized successfully")
+        logger.info("Clients (Supabase & Gemini) initialized successfully")
     except Exception as e:
         logger.error(f"Failed to initialize clients: {e}")
 
@@ -72,18 +76,34 @@ async def get_user_id(authorization: Optional[str] = Header(None)):
         raise HTTPException(status_code=401, detail="Missing auth token")
     
     token = authorization.replace("Bearer ", "")
-    try:
-        # Verify the Google Token
-        idinfo = id_token.verify_oauth2_token(
-            token, 
-            requests.Request(), 
-            os.getenv("GOOGLE_CLIENT_ID")
-        )
-
-        return idinfo['sub']
-    except Exception as e:
-        logger.error(f"Token verification failed: {e}")
-        raise HTTPException(status_code=401, detail="Invalid auth token")
+    
+    # Check if it's an Access Token (starts with ya29) or ID Token
+    if token.startswith("ya29."):
+        try:
+            # Verify Access Token via Google's UserInfo API
+            userinfo_res = py_requests.get(
+                f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={token}"
+            )
+            if not userinfo_res.ok:
+                raise Exception("Google UserInfo API rejected token")
+            
+            user_data = userinfo_res.json()
+            return user_data['sub'] # Unique Google ID
+        except Exception as e:
+            logger.error(f"Access token verification failed: {e}")
+            raise HTTPException(status_code=401, detail=f"Invalid Access Token: {str(e)}")
+    else:
+        try:
+            # Verify as ID Token (Legacy/Fallback)
+            idinfo = id_token.verify_oauth2_token(
+                token, 
+                requests.Request(), 
+                os.getenv("GOOGLE_CLIENT_ID")
+            )
+            return idinfo['sub']
+        except Exception as e:
+            logger.error(f"Token verification failed: {e}")
+            raise HTTPException(status_code=401, detail="Invalid auth token")
 
 @app.get("/")
 async def root():
@@ -92,7 +112,7 @@ async def root():
 @app.post("/onboarding/parse")
 async def parse_resume(file: UploadFile = File(...)):
     if not genai_client:
-        raise HTTPException(status_code=500, detail="Gemini API not configured")
+        raise HTTPException(status_code=500, detail="Gemini API is not configured on the server. Please add GEMINI_API_KEY to your Railway environment variables.")
         
     temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, file.filename)
