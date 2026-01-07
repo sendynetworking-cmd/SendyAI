@@ -16,8 +16,9 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download NLP data for resume-parser
-RUN python -m spacy download en_core_web_sm
+# Download NLP data for resume-parser (pinned for spaCy 2.3.5)
+RUN python -m spacy download en_core_web_sm-2.3.1 --manual
+RUN python -m spacy link en_core_web_sm-2.3.1 en_core_web_sm
 RUN python -m nltk.downloader stopwords \
     punkt \
     averaged_perceptron_tagger \

@@ -7,8 +7,8 @@ google-generativeai
 google-auth
 pydantic
 python-multipart
-spacy
-nltk
+spacy==2.3.5
+nltk==3.5
 # spacy model download will be handled in the Dockerfile or startup script
 # python -m spacy download en_core_web_sm
 # python -m nltk.downloader words
