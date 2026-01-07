@@ -4,7 +4,6 @@ from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from resume_parser import resumeparse
 import google.generativeai as genai
 from google.oauth2 import id_token
 from google.auth.transport import requests
