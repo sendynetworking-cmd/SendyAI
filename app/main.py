@@ -22,6 +22,13 @@ load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Diagnostic Logging
+logger.info("--- Environment Variable Check ---")
+for key in os.environ:
+    if any(prefix in key for prefix in ["SUPABASE", "GEMINI", "GOOGLE", "PORT"]):
+        logger.info(f"FOUND: {key}")
+logger.info("----------------------------------")
+
 # Validate Essential Environment Variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
