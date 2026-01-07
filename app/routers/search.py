@@ -1,4 +1,5 @@
 import logging
+import traceback
 import requests as py_requests
 from fastapi import APIRouter, Depends, HTTPException
 from ..schemas.profile import SearchRequest
@@ -24,8 +25,6 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
     hunter_key = settings.HUNTER_API_KEY
     if hunter_key:
         try:
-            logger.info(f"Hunter lookup for {full_name} at {company} (URL: {linkedin_url})")
-            
             params = {"api_key": hunter_key}
             if full_name and company:
                 params["full_name"] = full_name
@@ -33,15 +32,23 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
             elif linkedin_url:
                 params["linkedin_url"] = linkedin_url
             
+            logger.info(f"Hunter lookup params: {params}")
+            
             hunter_url = "https://api.hunter.io/v2/email-finder"
             h_res = py_requests.get(hunter_url, params=params, timeout=10)
+            logger.info(f"Hunter response status: {h_res.status_code}")
+            
             h_data = h_res.json()
+            logger.info(f"Hunter response body: {h_data}")
             
             if h_data.get("data") and h_data["data"].get("email"):
                 email = h_data["data"]["email"]
                 logger.info(f"Hunter found email: {email}")
+            elif h_data.get("errors"):
+                logger.error(f"Hunter API Errors: {h_data['errors']}")
         except Exception as e:
-            logger.error(f"Hunter error: {e}")
+            logger.error(f"Hunter integration error: {e}")
+            logger.error(traceback.format_exc())
 
     # Log usage
     if email:
