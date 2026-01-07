@@ -1,4 +1,12 @@
 import os
+import sys
+
+# Absolute Top Diagnostic (runs before anything else)
+print("--- STARTUP DIAGNOSTIC: ALL ENV KEYS ---", flush=True)
+for key in sorted(os.environ.keys()):
+    print(f"DIAGNOSTIC_ENV: {key}", flush=True)
+print("--- END STARTUP DIAGNOSTIC ---", flush=True)
+
 import logging
 from typing import Optional, List, Any
 from fastapi import FastAPI, File, UploadFile, Header, HTTPException, Depends
@@ -21,13 +29,6 @@ load_dotenv()
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Diagnostic Logging
-logger.info("--- FULL Environment Variable Key List ---")
-keys = sorted(os.environ.keys())
-for key in keys:
-    logger.info(f"ENV_KEY: {key}")
-logger.info("------------------------------------------")
 
 # Validate Essential Environment Variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
