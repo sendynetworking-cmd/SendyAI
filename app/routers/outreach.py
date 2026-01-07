@@ -26,16 +26,33 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     
     user = user_profile.data
     recipient = req.profileData
+    
+    # Format recipient details for the prompt
+    exp_list = "\n".join([f"- {e.get('title')} at {e.get('company')} ({e.get('dates')})" for e in recipient.get('experience', [])])
+    edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient.get('education', [])])
+    honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient.get('honors', [])])
 
     system_prompt = f"""
-    You are an expert networking assistant. Draft an outreach email.
+    You are an expert networking assistant. Draft a personalized outreach email.
     
     SENDER: {user['name']}
     SENDER BACKGROUND: {user['raw_summary']}
     SENDER SKILLS: {', '.join(user.get('skills', []))}
     
     RECIPIENT: {recipient.get('name')}
-    RECIPIENT ROLE: {recipient.get('headline')}
+    RECIPIENT HEADLINE: {recipient.get('headline')}
+    
+    RECIPIENT EXPERIENCE:
+    {exp_list}
+    
+    RECIPIENT EDUCATION:
+    {edu_list}
+    
+    RECIPIENT HONORS & AWARDS:
+    {honors_list}
+    
+    Draft an email that builds a meaningful bridge between the SENDER and RECIPIENT. 
+    Use specific details from their experience or honors if they are relevant to the sender's background.
     
     Output ONLY the subject and body. No placeholders.
     """
