@@ -11,6 +11,10 @@ from google.auth.transport import requests
 import requests as py_requests
 from supabase import create_client, Client
 from dotenv import load_dotenv
+import shutil
+import tempfile
+import json
+import traceback
 import re
 import spacy
 import pdfplumber
