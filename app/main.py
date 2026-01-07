@@ -42,6 +42,16 @@ else:
         supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
         genai_client = GenAIClient(api_key=GEMINI_KEY)
         logger.info("Clients (Supabase & Gemini) initialized successfully")
+        
+        # Diagnostic: List Available Models
+        try:
+            logger.info("--- AVAILABLE MODELS ---")
+            for m in genai_client.models.list():
+                logger.info(f"MODEL: {m.name}")
+            logger.info("------------------------")
+        except Exception as list_err:
+            logger.warning(f"Could not list models: {list_err}")
+
     except Exception as e:
         logger.error(f"Failed to initialize clients: {e}")
 
