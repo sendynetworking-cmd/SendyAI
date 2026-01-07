@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y \
 # Install python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt && \
-    python -m spacy download en_core_web_sm
+    python -m spacy download en_core_web_sm && \
+    python -m nltk.downloader stopwords punkt averaged_perceptron_tagger universal_tagset wordnet brown maxent_ne_chunker
 
 # Copy application code
 COPY . .

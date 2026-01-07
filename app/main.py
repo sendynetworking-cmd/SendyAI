@@ -16,43 +16,14 @@ import tempfile
 import json
 import traceback
 import re
-import spacy
-import pdfplumber
-from docx import Document
+import nltk
+from resume_parser import resumeparse
 
 load_dotenv()
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-# Initialize Spacy
-try:
-    nlp = spacy.load("en_core_web_sm")
-    logger.info("Spacy model 'en_core_web_sm' loaded successfully")
-except Exception as e:
-    logger.error(f"Failed to load Spacy model: {e}")
-    nlp = None
-
-def extract_text_from_pdf(path):
-    text = ""
-    try:
-        with pdfplumber.open(path) as pdf:
-            for page in pdf.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    text += page_text + "\n"
-    except Exception as e:
-        logger.error(f"Error extracting PDF text: {e}")
-    return text
-
-def extract_text_from_docx(path):
-    try:
-        doc = Document(path)
-        return "\n".join(p.text for p in doc.paragraphs)
-    except Exception as e:
-        logger.error(f"Error extracting DOCX text: {e}")
-        return ""
 
 # Validate Essential Environment Variables
 SUPABASE_URL = os.getenv("SUPABASE_URL")
@@ -152,93 +123,25 @@ async def parse_resume(file: UploadFile = File(...)):
         with open(temp_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
-        # 1. Extract raw text based on file type
-        text = ""
-        if file.filename.lower().endswith(".pdf"):
-            text = extract_text_from_pdf(temp_path)
-        elif file.filename.lower().endswith((".docx", ".doc")):
-            text = extract_text_from_docx(temp_path)
-        else:
-            raise HTTPException(status_code=400, detail="Unsupported file format. Please upload PDF or DOCX.")
-
-        if not text.strip():
-            raise ValueError("Could not extract any text from the file.")
-
-        # 2. Deterministic Parsing using Spacy and Regex
-        doc = nlp(text) if nlp else None
+        # Use resume-parser to extract info
+        # It handles PDF and DOCX internally using spacy/nltk
+        logger.info(f"Parsing resume with resume-parser: {file.filename}")
+        data = resumeparse.read_file(temp_path)
         
-        # Name extraction
-        name = ""
-        if doc:
-            for ent in doc.ents:
-                if ent.label_ == "PERSON":
-                    name = ent.text
-                    break
-        
-        # Email extraction (Regex)
-        email = ""
-        email_match = re.search(r'[\w\.-]+@[\w\.-]+', text)
-        if email_match:
-            email = email_match.group(0)
-
-        # Phone extraction (Regex)
-        phone = ""
-        phone_match = re.search(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', text)
-        if phone_match:
-            phone = phone_match.group(0)
-
-        # Skills (Keyword matching)
-        COMMON_SKILLS = [
-            "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", "Node.js", 
-            "HTML", "CSS", "SQL", "NoSQL", "PostgreSQL", "MongoDB", "AWS", "Azure", "GCP", 
-            "Docker", "Kubernetes", "Git", "CI/CD", "Machine Learning", "Data Analysis", 
-            "C++", "C#", "Go", "Rust", "Swift", "Kotlin", "Flutter", "FastAPI", "Django", "Flask",
-            "Next.js", "Tailwind", "REST API", "GraphQL", "PyTorch", "TensorFlow"
-        ]
-        found_skills = []
-        text_lower = text.lower()
-        for skill in COMMON_SKILLS:
-            if re.search(rf"\b{re.escape(skill.lower())}\b", text_lower):
-                found_skills.append(skill)
-
-        # University/Education
-        universities = []
-        if doc:
-            for ent in doc.ents:
-                if ent.label_ == "ORG" and any(term in ent.text for term in ["University", "College", "Institute", "School", "Polytechnic"]):
-                    if ent.text not in universities:
-                        universities.append(ent.text)
-        
-        # Degree
-        degrees = []
-        COMMON_DEGREES = ["Bachelor", "Master", "PhD", "B.Sc", "M.Sc", "B.A", "M.A", "B.Tech", "M.Tech", "MBA", "Associate"]
-        for d in COMMON_DEGREES:
-            if d.lower() in text_lower:
-                degrees.append(d)
-
-        # Designation/Roles (Heuristic: Look for common title keywords)
-        designations = []
-        COMMON_TITLES = ["Engineer", "Developer", "Manager", "Analyst", "Lead", "Architect", "Scientist", "Consultant"]
-        if doc:
-            for ent in doc.ents:
-                # Often PERSON or ORG misidentifies roles, or just simple keyword check
-                if any(title in ent.text for title in COMMON_TITLES):
-                    if ent.text not in designations and len(ent.text) < 50:
-                        designations.append(ent.text)
-
+        # Ensure fields match what the frontend expects
         response_data = {
-            "name": name,
-            "email": email,
-            "phone": phone,
-            "university": universities[:2], # Limit to top 2
-            "degree": degrees[:2],
-            "designition": designations[:2],
-            "skills": found_skills[:15], # Limit to top 15
-            "total_exp": 0, # Placeholder
-            "raw_summary": f"Professional profile with {len(found_skills)} identified skills."
+            "name": data.get("name", ""),
+            "email": data.get("email", ""),
+            "phone": data.get("phone", ""),
+            "university": data.get("university", []),
+            "degree": data.get("degree", []),
+            "designition": data.get("designition", []),
+            "skills": data.get("skills", []),
+            "total_exp": data.get("total_exp", 0),
+            "raw_summary": f"Extracted profile for {data.get('name', 'User')}."
         }
         
-        logger.info(f"Successfully parsed resume: {name} ({email})")
+        logger.info(f"Successfully parsed resume: {response_data['name']}")
         return response_data
 
     except Exception as e:
