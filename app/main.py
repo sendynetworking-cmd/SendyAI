@@ -119,33 +119,35 @@ async def get_user_id(authorization: Optional[str] = Header(None)):
     
     token = authorization.replace("Bearer ", "")
     
-    # Check if it's an Access Token (starts with ya29) or ID Token
-    if token.startswith("ya29."):
-        try:
-            # Verify Access Token via Google's UserInfo API
-            userinfo_res = py_requests.get(
-                f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={token}"
-            )
-            if not userinfo_res.ok:
-                raise Exception("Google UserInfo API rejected token")
-            
+    # Try Access Token first (Common for Chrome Extensions)
+    try:
+        # Verify Access Token via Google's UserInfo API
+        userinfo_res = py_requests.get(
+            "https://www.googleapis.com/oauth2/v3/userinfo",
+            headers={"Authorization": f"Bearer {token}"}
+        )
+        if userinfo_res.ok:
             user_data = userinfo_res.json()
             return user_data['sub'] # Unique Google ID
-        except Exception as e:
-            logger.error(f"Access token verification failed: {e}")
-            raise HTTPException(status_code=401, detail=f"Invalid Access Token: {str(e)}")
-    else:
-        try:
-            # Verify as ID Token (Legacy/Fallback)
-            idinfo = id_token.verify_oauth2_token(
-                token, 
-                requests.Request(), 
-                os.getenv("GOOGLE_CLIENT_ID")
-            )
-            return idinfo['sub']
-        except Exception as e:
-            logger.error(f"Token verification failed: {e}")
-            raise HTTPException(status_code=401, detail="Invalid auth token")
+        else:
+            logger.warning(f"UserInfo API failed (Status {userinfo_res.status_code}): {userinfo_res.text}")
+    except Exception as e:
+        logger.error(f"Access token check logic failed: {e}")
+
+    # Fallback/Try ID Token
+    try:
+        idinfo = id_token.verify_oauth2_token(
+            token, 
+            requests.Request(), 
+            os.getenv("GOOGLE_CLIENT_ID")
+        )
+        return idinfo['sub']
+    except Exception as e:
+        logger.error(f"Token verification failed completely: {e}")
+        raise HTTPException(
+            status_code=401, 
+            detail="Invalid or expired authentication token. Please sign out and sign back in."
+        )
 
 @app.get("/")
 async def root():
