@@ -95,6 +95,9 @@ async def root():
 
 @app.post("/onboarding/parse")
 async def parse_resume(file: UploadFile = File(...)):
+    if not genai_configured:
+        raise HTTPException(status_code=500, detail="Gemini API not configured")
+        
     temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, file.filename)
     
@@ -102,10 +105,43 @@ async def parse_resume(file: UploadFile = File(...)):
         shutil.copyfileobj(file.file, buffer)
     
     try:
-        # Using the resume-parser library as requested
-        data = resumeparse.read_file(temp_path)
-        logger.info(f"Parsed data: {data}")
-        return data
+        # 1. Extract Text from PDF
+        from pypdf import PdfReader
+        reader = PdfReader(temp_path)
+        text = ""
+        for page in reader.pages:
+            text += page.extract_text()
+            
+        if not text.strip():
+            raise ValueError("Could not extract text from PDF")
+
+        # 2. Use Gemini to Parse
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""
+        Extract the professional profile from this resume text into the following JSON format:
+        {{
+          "name": "Full Name",
+          "email": "Email Address",
+          "phone": "Phone Number",
+          "university": ["University 1", "University 2"],
+          "degree": ["Degree 1", "Degree 2"],
+          "designition": ["Role 1", "Role 2"],
+          "skills": ["Skill 1", "Skill 2"],
+          "total_exp": 5.5,
+          "raw_summary": "A brief 2-3 sentence professional bio"
+        }}
+        
+        RESUME TEXT:
+        {text}
+        """
+        
+        response = model.generate_content(prompt)
+        # Clean response if it contains markdown code blocks
+        json_str = response.text.replace("```json", "").replace("```", "").strip()
+        
+        import json
+        return json.loads(json_str)
+        
     except Exception as e:
         logger.error(f"Parsing error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
