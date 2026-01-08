@@ -27,22 +27,30 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     user = user_profile.data
     recipient = req.profileData
     
-    # Format recipient details for the prompt
-    exp_list = "\n".join([f"- {e.get('title')} at {e.get('company')} ({e.get('dates')})" for e in recipient.get('experience', [])])
-    edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient.get('education', [])])
-    honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient.get('honors', [])])
+    # Prompt Pruning: Limit sender data
+    sender_summary = (user.get('raw_summary') or "")[:1000]
+    sender_skills = user.get('skills', [])[:15]
+    
+    # Prompt Pruning: Limit recipient lists to most recent/relevant
+    recipient_exp = recipient.get('experience', [])[:5]
+    recipient_edu = recipient.get('education', [])[:3]
+    recipient_honors = recipient.get('honors', [])[:5]
+    
+    exp_list = "\n".join([f"- {e.get('title')} at {e.get('company')} ({e.get('dates')})" for e in recipient_exp])
+    edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient_edu])
+    honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient_honors])
 
     system_prompt = f"""
     You are an expert networking assistant. Draft a personalized outreach email.
     
     SENDER: {user['name']}
-    SENDER BACKGROUND: {user['raw_summary']}
-    SENDER SKILLS: {', '.join(user.get('skills', []))}
+    SENDER BACKGROUND: {sender_summary}
+    SENDER SKILLS: {', '.join(sender_skills)}
     
     RECIPIENT: {recipient.get('name')}
     RECIPIENT HEADLINE: {recipient.get('headline')}
     
-    RECIPIENT EXPERIENCE:
+    RECIPIENT EXPERIENCE (Recent):
     {exp_list}
     
     RECIPIENT EDUCATION:
