@@ -33,11 +33,29 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
     if hunter_key:
         try:
             params = {"api_key": hunter_key}
-            if full_name and company:
+            
+            # Extract handle from URL if present
+            handle = None
+            if linkedin_url:
+                # e.g. https://www.linkedin.com/in/username/ -> username
+                parts = [p for p in linkedin_url.split('/') if p]
+                if 'in' in parts:
+                    idx = parts.index('in')
+                    if idx + 1 < len(parts):
+                        handle = parts[idx + 1]
+            
+            if handle:
+                params["linkedin_handle"] = handle
+                logger.info(f"DEBUG: Using LinkedIn Handle: {handle}")
+            elif full_name and company:
                 params["full_name"] = full_name
                 params["company"] = company
-            elif linkedin_url:
-                params["linkedin_url"] = linkedin_url
+                logger.info(f"DEBUG: Using Name/Company Search: {full_name} @ {company}")
+            else:
+                logger.warning("DEBUG: Not enough data for Hunter lookup")
+                return {"email": "Not found", "success": False}
+
+            logger.info(f"DEBUG: Final Hunter.io Parameters: {params}")
             
             logger.info("DEBUG: Calling Hunter.io API...")
             hunter_url = "https://api.hunter.io/v2/email-finder"
