@@ -95,16 +95,21 @@ var ExtPay = (function () {
             const keys = Array.isArray(key) ? key : [key];
             const res = {};
 
-            // 1. Try Chrome/Firefox Extension Storage
+            // 1. Try Native Chrome Storage (Resilient check)
             try {
                 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                    return await browserPolyfill.storage.local.get(key);
+                    return new Promise(resolve => {
+                        chrome.storage.local.get(key, (items) => {
+                            if (chrome.runtime.lastError) resolve({});
+                            else resolve(items || {});
+                        });
+                    });
                 }
             } catch (e) {
-                console.warn('Extension storage unavailable, falling back to localStorage');
+                // Extension storage not available
             }
 
-            // 2. Fallback to Web localStorage
+            // 2. Fallback to localStorage
             if (typeof localStorage !== 'undefined') {
                 keys.forEach(k => {
                     const val = localStorage.getItem(k);
@@ -115,14 +120,17 @@ var ExtPay = (function () {
             }
             return res;
         }
+
         async function set(dict) {
-            // 1. Try Extension Storage
+            // 1. Try Native Chrome Storage
             try {
                 if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                    return await browserPolyfill.storage.local.set(dict);
+                    return new Promise(resolve => {
+                        chrome.storage.local.set(dict, resolve);
+                    });
                 }
             } catch (e) {
-                // Ignore error, fallback below
+                // Extension storage not available
             }
 
             // 2. Fallback to localStorage
@@ -134,11 +142,11 @@ var ExtPay = (function () {
         }
 
         async function fetch_user() {
-            const storage = await get(['extensionpay_api_key']);
-            const api_key = storage.extensionpay_api_key;
-            if (!api_key) return { paid: false };
-
             try {
+                const storage = await get(['extensionpay_api_key']);
+                const api_key = storage.extensionpay_api_key;
+                if (!api_key) return { paid: false };
+
                 const resp = await fetch(`${EXTENSION_URL}/api/v2/user?api_key=${api_key}`);
                 if (!resp.ok) return { paid: false };
                 const user_data = await resp.json();
@@ -160,14 +168,26 @@ var ExtPay = (function () {
                 addListener: (cb) => paid_callbacks.push(cb)
             },
             openPaymentPage: async () => {
-                const storage = await get(['extensionpay_api_key']);
-                let api_key = storage.extensionpay_api_key;
-                if (!api_key) {
-                    const resp = await fetch(`${EXTENSION_URL}/api/new-key`, { method: 'POST' });
-                    api_key = await resp.json();
-                    await set({ extensionpay_api_key: api_key });
+                let api_key = null;
+                try {
+                    const storage = await get(['extensionpay_api_key']);
+                    api_key = storage.extensionpay_api_key;
+
+                    if (!api_key) {
+                        const resp = await fetch(`${EXTENSION_URL}/api/new-key`, { method: 'POST' });
+                        if (resp.ok) {
+                            api_key = await resp.json();
+                            await set({ extensionpay_api_key: api_key });
+                        }
+                    }
+                } catch (e) {
+                    console.warn('ExtensionPay: Could not fetch API key (likely CORS or web context), opening payment page without key.');
                 }
-                const url = `${EXTENSION_URL}/choose-plan?api_key=${api_key}`;
+
+                const url = api_key
+                    ? `${EXTENSION_URL}/choose-plan?api_key=${api_key}`
+                    : `${EXTENSION_URL}/choose-plan`;
+
                 if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
                     chrome.tabs.create({ url });
                 } else {
