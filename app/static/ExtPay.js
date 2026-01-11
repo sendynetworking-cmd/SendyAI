@@ -92,13 +92,20 @@ var ExtPay = (function () {
         const paid_callbacks = [];
 
         async function get(key) {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                try { return await browserPolyfill.storage.sync.get(key) }
-                catch (e) { return await browserPolyfill.storage.local.get(key) }
-            }
+            const keys = Array.isArray(key) ? key : [key];
             const res = {};
+
+            // 1. Try Chrome/Firefox Extension Storage
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    return await browserPolyfill.storage.local.get(key);
+                }
+            } catch (e) {
+                console.warn('Extension storage unavailable, falling back to localStorage');
+            }
+
+            // 2. Fallback to Web localStorage
             if (typeof localStorage !== 'undefined') {
-                const keys = Array.isArray(key) ? key : [key];
                 keys.forEach(k => {
                     const val = localStorage.getItem(k);
                     if (val) {
@@ -109,10 +116,16 @@ var ExtPay = (function () {
             return res;
         }
         async function set(dict) {
-            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-                try { return await browserPolyfill.storage.sync.set(dict) }
-                catch (e) { return await browserPolyfill.storage.local.set(dict) }
+            // 1. Try Extension Storage
+            try {
+                if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                    return await browserPolyfill.storage.local.set(dict);
+                }
+            } catch (e) {
+                // Ignore error, fallback below
             }
+
+            // 2. Fallback to localStorage
             if (typeof localStorage !== 'undefined') {
                 for (const key in dict) {
                     localStorage.setItem(key, JSON.stringify(dict[key]));
@@ -154,7 +167,12 @@ var ExtPay = (function () {
                     api_key = await resp.json();
                     await set({ extensionpay_api_key: api_key });
                 }
-                chrome.tabs.create({ url: `${EXTENSION_URL}/choose-plan?api_key=${api_key}` });
+                const url = `${EXTENSION_URL}/choose-plan?api_key=${api_key}`;
+                if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+                    chrome.tabs.create({ url });
+                } else {
+                    window.open(url, '_blank');
+                }
             },
             startBackground: () => {
                 chrome.runtime.onMessage.addListener((message) => {
