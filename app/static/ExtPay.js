@@ -92,12 +92,32 @@ var ExtPay = (function () {
         const paid_callbacks = [];
 
         async function get(key) {
-            try { return await browserPolyfill.storage.sync.get(key) }
-            catch (e) { return await browserPolyfill.storage.local.get(key) }
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                try { return await browserPolyfill.storage.sync.get(key) }
+                catch (e) { return await browserPolyfill.storage.local.get(key) }
+            }
+            const res = {};
+            if (typeof localStorage !== 'undefined') {
+                const keys = Array.isArray(key) ? key : [key];
+                keys.forEach(k => {
+                    const val = localStorage.getItem(k);
+                    if (val) {
+                        try { res[k] = JSON.parse(val); } catch (e) { res[k] = val; }
+                    }
+                });
+            }
+            return res;
         }
         async function set(dict) {
-            try { return await browserPolyfill.storage.sync.set(dict) }
-            catch (e) { return await browserPolyfill.storage.local.set(dict) }
+            if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+                try { return await browserPolyfill.storage.sync.set(dict) }
+                catch (e) { return await browserPolyfill.storage.local.set(dict) }
+            }
+            if (typeof localStorage !== 'undefined') {
+                for (const key in dict) {
+                    localStorage.setItem(key, JSON.stringify(dict[key]));
+                }
+            }
         }
 
         async function fetch_user() {
