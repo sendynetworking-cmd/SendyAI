@@ -28,16 +28,16 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
     
     email = None
 
-    # 1. TRY HUNTER
+    # 1. ATTEMPT 1: HUNTER WITH LINKEDIN HANDLE
     hunter_key = settings.HUNTER_API_KEY
     if hunter_key:
         try:
-            params = {"api_key": hunter_key}
+            # First attempt parameters
+            params1 = {"api_key": hunter_key}
             
             # Extract handle from URL if present
             handle = None
             if linkedin_url:
-                # e.g. https://www.linkedin.com/in/username/ -> username
                 parts = [p for p in linkedin_url.split('/') if p]
                 if 'in' in parts:
                     idx = parts.index('in')
@@ -45,32 +45,40 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
                         handle = parts[idx + 1]
             
             if handle:
-                params["linkedin_handle"] = handle
-                logger.info(f"DEBUG: Using LinkedIn Handle: {handle}")
-            elif full_name and company:
-                params["full_name"] = full_name
-                params["company"] = company
-                logger.info(f"DEBUG: Using Name/Company Search: {full_name} @ {company}")
-            else:
-                logger.warning("DEBUG: Not enough data for Hunter lookup")
-                return {"email": "Not found", "success": False}
+                params1["linkedin_handle"] = handle
+                logger.info(f"DEBUG: Attempt 1 - Using LinkedIn Handle: {handle}")
+                
+                logger.info("DEBUG: Calling Hunter.io API (Attempt 1)...")
+                h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params1, timeout=10)
+                logger.info(f"DEBUG: Attempt 1 Response Status: {h_res.status_code}")
+                
+                h_data = h_res.json()
+                if h_data.get("data") and h_data["data"].get("email"):
+                    email = h_data["data"]["email"]
+                    logger.info(f"Hunter found email in Attempt 1: {email}")
+                else:
+                    logger.info("DEBUG: Attempt 1 failed or returned no email.")
+            
+            # 2. ATTEMPT 2: FALLBACK TO FULL NAME + COMPANY
+            if not email and full_name and company:
+                params2 = {
+                    "api_key": hunter_key,
+                    "full_name": full_name,
+                    "company": company
+                }
+                logger.info(f"DEBUG: Attempt 2 - Using Name/Company Search: {full_name} @ {company}")
+                
+                logger.info("DEBUG: Calling Hunter.io API (Attempt 2)...")
+                h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params2, timeout=10)
+                logger.info(f"DEBUG: Attempt 2 Response Status: {h_res.status_code}")
+                
+                h_data = h_res.json()
+                if h_data.get("data") and h_data["data"].get("email"):
+                    email = h_data["data"]["email"]
+                    logger.info(f"Hunter found email in Attempt 2: {email}")
+                else:
+                    logger.info("DEBUG: Attempt 2 failed or returned no email.")
 
-            logger.info(f"DEBUG: Final Hunter.io Parameters: {params}")
-            
-            logger.info("DEBUG: Calling Hunter.io API...")
-            hunter_url = "https://api.hunter.io/v2/email-finder"
-            h_res = py_requests.get(hunter_url, params=params, timeout=10)
-            logger.info(f"DEBUG: Full Hunter URL hit: {h_res.url}")
-            logger.info(f"DEBUG: Hunter Response Status: {h_res.status_code}")
-            
-            h_data = h_res.json()
-            logger.info(f"DEBUG: Hunter Data Payload: {h_data}")
-            
-            if h_data.get("data") and h_data["data"].get("email"):
-                email = h_data["data"]["email"]
-                logger.info(f"Hunter found email: {email}")
-            elif h_data.get("errors"):
-                logger.error(f"Hunter API Errors: {h_data['errors']}")
         except Exception as e:
             logger.error(f"Hunter integration error: {e}")
             logger.error(traceback.format_exc())
