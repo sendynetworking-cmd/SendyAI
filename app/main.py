@@ -1,6 +1,9 @@
 import logging
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from .routers import onboarding, user, outreach, search
 
 # Logging
@@ -46,13 +49,14 @@ app.include_router(user.router)
 app.include_router(outreach.router)
 app.include_router(search.router)
 
+# Serve Static Files (CSS, JS, etc.)
+static_path = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_path), name="static")
+
 @app.get("/")
 async def root():
-    return {
-        "status": "online", 
-        "message": "Sendy AI API (Modular)",
-        "version": "1.1.0"
-    }
+    # Serve index.html (renamed home.html) at the root
+    return FileResponse(os.path.join(static_path, "index.html"))
 
 if __name__ == "__main__":
     import uvicorn

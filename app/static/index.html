@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sendy AI - Home</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: #fafafa;
+            color: var(--text-primary);
+            padding: var(--space-2xl) var(--space-xl);
+        }
+
+        .home-container {
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: var(--space-2xl);
+            padding: var(--space-2xl) 0;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: var(--space-md);
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-xl);
+            margin-bottom: var(--space-2xl);
+        }
+
+        .pricing-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .pricing-card .badge-popular {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(139, 92, 246, 0.1);
+            color: var(--accent-violet);
+            padding: 4px 10px;
+            border-radius: var(--radius-full);
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .tier-header {
+            text-align: center;
+            padding-bottom: var(--space-xl);
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--space-xl);
+        }
+
+        .tier-name {
+            font-size: var(--font-size-base);
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: var(--space-xs);
+        }
+
+        .tier-price {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
+
+        .tier-price span {
+            font-size: var(--font-size-base);
+            font-weight: 500;
+            color: var(--text-tertiary);
+        }
+
+        .features-list {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 var(--space-xl) 0;
+            flex-grow: 1;
+        }
+
+        .features-list li {
+            margin-bottom: var(--space-md);
+            display: flex;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+        }
+
+        .features-list li svg {
+            width: 18px;
+            height: 18px;
+            color: var(--accent-green);
+            margin-right: var(--space-sm);
+            flex-shrink: 0;
+        }
+
+        .guide-section {
+            margin-top: var(--space-2xl);
+            padding: var(--space-2xl);
+            background: white;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-xl);
+            text-align: center;
+        }
+
+        .guide-section h2 {
+            margin-bottom: var(--space-xl);
+            font-size: var(--font-size-2xl);
+            font-weight: 700;
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: var(--space-xl);
+        }
+
+        .step-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: var(--space-md);
+        }
+
+        .step-num {
+            width: 44px;
+            height: 44px;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--accent-indigo);
+            font-size: var(--font-size-lg);
+        }
+
+        .step-text {
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            line-height: 1.5;
+        }
+
+        .nav {
+            position: absolute;
+            top: var(--space-xl);
+            right: var(--space-2xl);
+            display: flex;
+            gap: var(--space-md);
+        }
+
+        @media (max-width: 768px) {
+            .steps-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Navigation removed for web version -->
+
+    <main class="home-container">
+        <header class="hero animate-in">
+            <h1>Sendy AI</h1>
+            <p>Your intelligent companion for LinkedIn outreach. Supercharge your networking with personalized
+                AI-generated
+                emails.</p>
+        </header>
+
+        <div class="pricing-grid">
+            <!-- Free Tier -->
+            <div class="card pricing-card animate-in" style="animation-delay: 0.1s;">
+                <div class="card-body">
+                    <div class="tier-header">
+                        <div class="tier-name">Free Plan</div>
+                        <div class="tier-price">$0<span>/mo</span></div>
+                    </div>
+                    <ul class="features-list">
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            3 Unified Credits / week
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Email Lookups Included
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            AI Outreach Generation
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Standard Support
+                        </li>
+                    </ul>
+                    <button class="btn btn-secondary btn-block" id="btn-free" disabled>Current Plan</button>
+                </div>
+            </div>
+
+            <!-- Pro Tier -->
+            <div class="card pricing-card animate-in"
+                style="animation-delay: 0.2s; border-color: var(--accent-violet);">
+                <div class="badge-popular">Recommended</div>
+                <div class="card-body">
+                    <div class="tier-header">
+                        <div class="tier-name">Pro Plan</div>
+                        <div class="tier-price">$20<span>/mo</span></div>
+                    </div>
+                    <ul class="features-list">
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            50 Unified Credits / week
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Email Lookups Included
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Unlimited Scraper Access
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Priority Support
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-block" id="btn-pro"
+                        style="background: var(--accent-violet); border-color: var(--accent-violet);">Upgrade to
+                        Pro</button>
+                </div>
+            </div>
+        </div>
+
+        <section class="guide-section animate-in" style="animation-delay: 0.3s;">
+            <h2 class="section-title" style="font-size: 1.5rem;">How it works</h2>
+            <div class="steps-grid">
+                <div class="step-card">
+                    <div class="step-num">1</div>
+                    <p class="step-text">Configure your sender profile in <b>Extension Settings</b></p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">2</div>
+                    <p class="step-text">Visit any <b>LinkedIn Profile</b> in your browser</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-num">3</div>
+                    <p class="step-text">Click <b>Generate</b> in the side panel to automate outreach</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="/static/ExtPay.js"></script>
+    <script src="/static/home.js"></script>
+</body>
+
+</html>
