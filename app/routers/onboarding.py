@@ -35,6 +35,10 @@ def extract_text_from_docx(path):
 
 @router.post("/parse")
 async def parse_resume(file: UploadFile = File(...)):
+    '''
+    Parse resume file and extract relevant information
+    '''
+    
     temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, file.filename)
     

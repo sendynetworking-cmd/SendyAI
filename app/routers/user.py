@@ -9,6 +9,10 @@ router = APIRouter(prefix="/user", tags=["user"])
 
 @router.post("/profile")
 async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_id)):
+    '''
+    Save user profile to Supabase
+    '''
+
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
     try:

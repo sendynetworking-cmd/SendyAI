@@ -12,11 +12,18 @@ router = APIRouter(prefix="/api", tags=["search"])
 
 @router.post("/find-email")
 async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
+    '''
+    Find email address for a given LinkedIn URL or full name and company
+    '''
+    
+    logger.info(f"DEBUG: Entering find_email for user {user_id}")
     linkedin_url = req.linkedinUrl
     full_name = req.fullName
     company = req.company
+    logger.info(f"DEBUG: Params received: url={linkedin_url}, name={full_name}, company={company}")
     
     if not linkedin_url and not (full_name and company):
+        logger.warning("DEBUG: Missing search parameters - returning 400")
         raise HTTPException(status_code=400, detail="Missing Search Parameters")
     
     email = None
@@ -32,15 +39,14 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
             elif linkedin_url:
                 params["linkedin_url"] = linkedin_url
             
-            logger.info(f"Hunter lookup params: {params}")
-            
+            logger.info("DEBUG: Calling Hunter.io API...")
             hunter_url = "https://api.hunter.io/v2/email-finder"
             h_res = py_requests.get(hunter_url, params=params, timeout=10)
-            logger.info(f"Hunter lookup URL: {h_res.url}")
-            logger.info(f"Hunter response status: {h_res.status_code}")
+            logger.info(f"DEBUG: Full Hunter URL hit: {h_res.url}")
+            logger.info(f"DEBUG: Hunter Response Status: {h_res.status_code}")
             
             h_data = h_res.json()
-            logger.info(f"Hunter response body: {h_data}")
+            logger.info(f"DEBUG: Hunter Data Payload: {h_data}")
             
             if h_data.get("data") and h_data["data"].get("email"):
                 email = h_data["data"]["email"]
@@ -56,10 +62,7 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
         try:
             supabase.table("usage_logs").insert({
                 "user_id": user_id,
-                "action": "find_email",
-                "provider": "hunter",
-                "success": True,
-                "metadata": {"linkedin_url": linkedin_url}
+                "action": "find_email"
             }).execute()
         except Exception as log_err:
             logger.warning(f"Failed to log search usage: {log_err}")

@@ -11,10 +11,14 @@ router = APIRouter(prefix="/outreach", tags=["outreach"])
 
 @router.post("/generate")
 async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_user_id)):
-    logger.info(f"Generating outreach for user: {user_id}")
+    '''
+    Generate outreach email for a given recipient profile
+    '''
+    
     if not supabase or not genai_client:
         raise HTTPException(status_code=500, detail="Services not configured")
 
+    # Lookup user profile
     try:
         user_profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
         if not user_profile.data:
@@ -27,30 +31,21 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     user = user_profile.data
     recipient = req.profileData
     
-    # Prompt Pruning: Limit sender data
-    sender_summary = (user.get('raw_summary') or "")[:1000]
-    sender_skills = user.get('skills', [])[:15]
-    
-    # Prompt Pruning: Limit recipient lists to most recent/relevant
-    recipient_exp = recipient.get('experience', [])[:5]
-    recipient_edu = recipient.get('education', [])[:3]
-    recipient_honors = recipient.get('honors', [])[:5]
-    
-    exp_list = "\n".join([f"- {e.get('title')} at {e.get('company')} ({e.get('dates')})" for e in recipient_exp])
-    edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient_edu])
-    honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient_honors])
+    exp_list = "\n".join([f"- {e.get('title')} at {e.get('company')} ({e.get('dates')})" for e in recipient.get('experience', [])])
+    edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient.get('education', [])])
+    honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient.get('honors', [])])
 
     system_prompt = f"""
     You are an expert networking assistant. Draft a personalized outreach email.
     
     SENDER: {user['name']}
-    SENDER BACKGROUND: {sender_summary}
-    SENDER SKILLS: {', '.join(sender_skills)}
+    SENDER BACKGROUND: {user['raw_summary']}
+    SENDER SKILLS: {', '.join(user.get('skills', []))}
     
     RECIPIENT: {recipient.get('name')}
     RECIPIENT HEADLINE: {recipient.get('headline')}
     
-    RECIPIENT EXPERIENCE (Recent):
+    RECIPIENT EXPERIENCE:
     {exp_list}
     
     RECIPIENT EDUCATION:
@@ -75,8 +70,7 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
         try:
             supabase.table("usage_logs").insert({
                 "user_id": user_id,
-                "action": "generate_email",
-                "model": settings.GEMINI_MODEL
+                "action": "generate_email"
             }).execute()
         except Exception as log_err:
             logger.warning(f"Failed to log usage: {log_err}")
