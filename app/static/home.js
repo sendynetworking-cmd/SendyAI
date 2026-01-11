@@ -1,4 +1,4 @@
-const extpay = ExtPay('sendy-ai');
+const extpay = ExtPay('sendyai');
 
 async function init() {
     const user = await extpay.getUser();
