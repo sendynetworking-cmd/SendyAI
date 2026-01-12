@@ -162,8 +162,19 @@ var ExtPay = (function () {
             }
         }
 
+        async function get_plans() {
+            try {
+                const resp = await fetch(`${EXTENSION_URL}/api/v2/plans`);
+                if (!resp.ok) return [];
+                return await resp.json();
+            } catch (e) {
+                return [];
+            }
+        }
+
         return {
             getUser: fetch_user,
+            getPlans: get_plans,
             onPaid: {
                 addListener: (cb) => paid_callbacks.push(cb)
             },
