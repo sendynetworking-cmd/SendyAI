@@ -29,7 +29,11 @@ async function init() {
 
         // 2. Render ExtensionPay Plans (Pro, etc.)
         plans.forEach(plan => {
-            // Determine features based on plan name (could be more dynamic if description is used)
+            const price = (plan.unitAmountCents / 100).toFixed(2);
+            const intervalText = plan.interval === 'month' ? '/mo' : (plan.interval === 'year' ? '/yr' : '');
+            const displayName = plan.nickname || 'Pro Plan';
+
+            // Determine features based on nickname or generic
             const features = [
                 '50 Unified Credits / week',
                 'Email Lookups Included',
@@ -40,11 +44,12 @@ async function init() {
             const isCurrent = user.paid && user.plan && (user.plan.id === plan.id);
 
             renderPlanCard({
-                name: plan.name,
-                price: plan.price,
+                name: displayName,
+                price: price,
+                interval: intervalText,
                 features: features,
                 isCurrent: isCurrent,
-                buttonText: isCurrent ? 'Current Plan' : `Upgrade to ${plan.name}`,
+                buttonText: isCurrent ? 'Current Plan' : `Upgrade to ${displayName}`,
                 buttonClass: 'btn-primary',
                 disabled: isCurrent,
                 onClick: () => extpay.openPaymentPage()
@@ -78,7 +83,7 @@ function renderPlanCard(config) {
         <div class="card-body">
             <div class="tier-header">
                 <div class="tier-name">${config.name}</div>
-                <div class="tier-price">$${config.price}<span>/mo</span></div>
+                <div class="tier-price">$${config.price}<span>${config.interval || '/mo'}</span></div>
             </div>
             <ul class="features-list">
                 ${featuresHtml}
