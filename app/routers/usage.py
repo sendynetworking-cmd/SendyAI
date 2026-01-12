@@ -1,3 +1,4 @@
+import logging
 import requests as py_requests
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Header
