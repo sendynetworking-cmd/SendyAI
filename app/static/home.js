@@ -6,7 +6,7 @@ async function init() {
     try {
         const [user, plans] = await Promise.all([
             extpay.getUser(),
-            extpay.getPlans()
+            fetch('/usage/plans').then(res => res.json())
         ]);
 
         // Clear loading state

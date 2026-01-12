@@ -8,6 +8,23 @@ from ..core.auth import get_user_id
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/usage", tags=["usage"])
 
+@router.get("/plans")
+async def get_plans_proxy():
+    '''
+    CORS proxy for ExtensionPay plans API
+    '''
+    try:
+        ep_url = "https://extensionpay.com/extension/sendyai/api/v2/plans"
+        response = py_requests.get(ep_url, timeout=5)
+        if response.ok:
+            return response.json()
+        else:
+            logger.error(f"ExtPay plans proxy failed: {response.status_code}")
+            return []
+    except Exception as e:
+        logger.error(f"Error in plans proxy: {e}")
+        return []
+
 def get_current_monday_utc():
     now = datetime.now(timezone.utc)
     monday = now - timedelta(days=now.weekday())
