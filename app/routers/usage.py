@@ -1,6 +1,6 @@
-import logging
+import requests as py_requests
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Header
 from ..core.clients import supabase
 from ..core.auth import get_user_id
 
@@ -9,32 +9,41 @@ router = APIRouter(prefix="/usage", tags=["usage"])
 
 def get_current_monday_utc():
     now = datetime.now(timezone.utc)
-    # weekday() returns 0 for Monday, 6 for Sunday
     monday = now - timedelta(days=now.weekday())
     return monday.replace(hour=0, minute=0, second=0, microsecond=0)
 
 @router.get("/status")
-async def get_usage_status(user_id: str = Depends(get_user_id)):
+async def get_usage_status(
+    user_id: str = Depends(get_user_id),
+    x_extpay_key: str = Header(None)
+):
     '''
     Get current usage status for the authenticated user
     '''
-    return await fetch_usage_stats(user_id)
+    return await fetch_usage_stats(user_id, x_extpay_key)
 
-async def fetch_usage_stats(user_id: str):
+async def fetch_usage_stats(user_id: str, extpay_key: str = None):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
 
     monday = get_current_monday_utc()
     
-    # 1. Get User Tier
+    # 1. Get User Tier from ExtensionPay (Source of Truth)
     tier = "free"
-    try:
-        profile_res = supabase.table("profiles").select("tier").eq("id", user_id).single().execute()
-        if profile_res.data:
-            tier = profile_res.data.get("tier", "free")
-    except Exception:
-        # Fallback to free if profile check fails (might be a new user)
-        pass
+    if extpay_key:
+        try:
+            # We call ExtensionPay directly to verify the key and get user status
+            # ID is 'sendyai' as confirmed by user
+            ep_url = f"https://extensionpay.com/extension/sendyai/api/v2/user?api_key={extpay_key}"
+            response = py_requests.get(ep_url, timeout=5)
+            if response.ok:
+                data = response.json()
+                if data.get("paidAt"):
+                    tier = "pro"
+            else:
+                logger.warning(f"ExtensionPay verification failed: {response.status_code}")
+        except Exception as e:
+            logger.error(f"Error calling ExtensionPay API: {e}")
 
     # 2. Query usage_logs for the current week
     usage_res = supabase.table("usage_logs") \
@@ -60,12 +69,12 @@ async def fetch_usage_stats(user_id: str):
         "lastWeekReset": monday.isoformat()
     }
 
-async def verify_usage(user_id: str):
+async def verify_usage(user_id: str, extpay_key: str = None):
     '''
     Helper to check if a user has remaining credits.
     Raises HTTPException if limit reached.
     '''
-    stats = await fetch_usage_stats(user_id)
+    stats = await fetch_usage_stats(user_id, extpay_key)
     if stats["creditsRemaining"] <= 0:
         raise HTTPException(
             status_code=403, 

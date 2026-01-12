@@ -10,13 +10,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/outreach", tags=["outreach"])
 
 @router.post("/generate")
-async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_user_id)):
+async def generate_outreach(
+    req: OutreachRequest, 
+    user_id: str = Depends(get_user_id),
+    x_extpay_key: str = Header(None)
+):
     '''
     Generate outreach email for a given recipient profile
     '''
     
     # Check Usage First
-    await verify_usage(user_id)
+    await verify_usage(user_id, x_extpay_key)
     
     if not supabase or not genai_client:
         raise HTTPException(status_code=500, detail="Services not configured")

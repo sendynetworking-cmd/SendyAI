@@ -26,7 +26,6 @@ async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_i
             "skills": profile.skills,
             "total_exp": profile.total_exp,
             "raw_summary": profile.raw_summary,
-            "tier": profile.tier,
             "updated_at": "now()"
         }).execute()
         return {"success": True}

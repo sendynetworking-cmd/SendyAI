@@ -11,14 +11,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api", tags=["search"])
 
 @router.post("/find-email")
-async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
+async def find_email(
+    req: SearchRequest, 
+    user_id: str = Depends(get_user_id),
+    x_extpay_key: str = Header(None)
+):
     '''
     Find email address for a given LinkedIn URL or full name and company
     '''
     
     # Check Usage First
     if not req.skipLog:
-        await verify_usage(user_id)
+        await verify_usage(user_id, x_extpay_key)
     
     logger.info(f"DEBUG: Entering find_email for user {user_id}")
     linkedin_url = req.linkedinUrl

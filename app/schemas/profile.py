@@ -18,7 +18,6 @@ class ProfileUpdate(BaseModel):
     skills: Optional[List[str]] = []
     total_exp: Optional[float] = 0.0
     raw_summary: Optional[str] = ""
-    tier: Optional[str] = "free"
 
 class OutreachRequest(BaseModel):
     profileData: dict
