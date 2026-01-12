@@ -1,6 +1,6 @@
 import logging
 import traceback
-from fastapi import APIRouter, Depends, HTTPException
+from .usage import verify_usage
 from ..schemas.profile import OutreachRequest
 from ..core.clients import supabase, genai_client
 from ..core.auth import get_user_id
@@ -14,6 +14,9 @@ async def generate_outreach(req: OutreachRequest, user_id: str = Depends(get_use
     '''
     Generate outreach email for a given recipient profile
     '''
+    
+    # Check Usage First
+    await verify_usage(user_id)
     
     if not supabase or not genai_client:
         raise HTTPException(status_code=500, detail="Services not configured")

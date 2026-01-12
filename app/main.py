@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from .routers import onboarding, user, outreach, search
+from .routers import onboarding, user, outreach, search, usage
 
 # Logging
 logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,7 @@ app.include_router(onboarding.router)
 app.include_router(user.router)
 app.include_router(outreach.router)
 app.include_router(search.router)
+app.include_router(usage.router)
 
 # Serve Static Files (CSS, JS, etc.)
 static_path = os.path.join(os.path.dirname(__file__), "static")

@@ -18,6 +18,7 @@ class ProfileUpdate(BaseModel):
     skills: Optional[List[str]] = []
     total_exp: Optional[float] = 0.0
     raw_summary: Optional[str] = ""
+    tier: Optional[str] = "free"
 
 class OutreachRequest(BaseModel):
     profileData: dict
@@ -26,3 +27,4 @@ class SearchRequest(BaseModel):
     linkedinUrl: Optional[str] = None
     fullName: Optional[str] = None
     company: Optional[str] = None
+    skipLog: Optional[bool] = False

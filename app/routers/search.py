@@ -1,7 +1,7 @@
 import logging
 import traceback
 import requests as py_requests
-from fastapi import APIRouter, Depends, HTTPException
+from .usage import verify_usage
 from ..schemas.profile import SearchRequest
 from ..core.clients import supabase
 from ..core.auth import get_user_id
@@ -15,6 +15,10 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
     '''
     Find email address for a given LinkedIn URL or full name and company
     '''
+    
+    # Check Usage First
+    if not req.skipLog:
+        await verify_usage(user_id)
     
     logger.info(f"DEBUG: Entering find_email for user {user_id}")
     linkedin_url = req.linkedinUrl
@@ -84,7 +88,7 @@ async def find_email(req: SearchRequest, user_id: str = Depends(get_user_id)):
             logger.error(traceback.format_exc())
 
     # Log usage
-    if email:
+    if email and not req.skipLog:
         try:
             supabase.table("usage_logs").insert({
                 "user_id": user_id,
