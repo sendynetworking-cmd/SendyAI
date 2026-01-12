@@ -1,6 +1,7 @@
 import logging
 import traceback
 import requests as py_requests
+from fastapi import APIRouter, Depends, HTTPException, Header
 from .usage import verify_usage
 from ..schemas.profile import SearchRequest
 from ..core.clients import supabase

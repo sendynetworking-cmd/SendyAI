@@ -1,5 +1,6 @@
 import logging
 import traceback
+from fastapi import APIRouter, Depends, HTTPException, Header
 from .usage import verify_usage
 from ..schemas.profile import OutreachRequest
 from ..core.clients import supabase, genai_client
