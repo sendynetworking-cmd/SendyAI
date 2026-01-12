@@ -194,12 +194,84 @@
                 emails.</p>
         </header>
 
-        <div id="pricing-grid" class="pricing-grid">
-            <!-- Dynamic Plans will be injected here by home.js -->
-            <div class="card pricing-card animate-in" id="loading-plans"
-                style="grid-column: 1 / -1; text-align: center; padding: var(--space-2xl);">
-                <div class="spinner-sm" style="margin: 0 auto var(--space-md);"></div>
-                <p style="color: var(--text-secondary);">Loading plans...</p>
+        <div class="pricing-grid">
+            <!-- Free Tier -->
+            <div class="card pricing-card animate-in" style="animation-delay: 0.1s;">
+                <div class="card-body">
+                    <div class="tier-header">
+                        <div class="tier-name">Free Plan</div>
+                        <div class="tier-price">$0<span>/mo</span></div>
+                    </div>
+                    <ul class="features-list">
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            3 Unified Credits / week
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Email Lookups Included
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            AI Outreach Generation
+                        </li>
+                    </ul>
+                    <button class="btn btn-secondary btn-block" id="btn-free" disabled>Current Plan</button>
+                </div>
+            </div>
+
+            <!-- Pro Tier -->
+            <div class="card pricing-card animate-in"
+                style="animation-delay: 0.2s; border-color: var(--accent-violet);">
+                <div class="badge-popular">Recommended</div>
+                <div class="card-body">
+                    <div class="tier-header">
+                        <div class="tier-name">Pro Plan</div>
+                        <div class="tier-price">$19.99<span>/mo</span></div>
+                    </div>
+                    <ul class="features-list">
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            50 Unified Credits / week
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Email Lookups Included
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            Latest AI Models
+                        </li>
+                        <li>
+                            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                    d="M5 13l4 4L19 7" />
+                            </svg>
+                            AI Email Generation
+                        </li>
+                    </ul>
+                    <button class="btn btn-primary btn-block" id="btn-pro"
+                        style="background: var(--accent-violet); border-color: var(--accent-violet);">Upgrade to
+                        Pro</button>
+                </div>
             </div>
         </div>
 
