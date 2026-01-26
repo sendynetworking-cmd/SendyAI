@@ -71,10 +71,6 @@ async def parse_resume(file: UploadFile = File(...)):
         if email_match:
             email = email_match.group(0)
 
-        phone = ""
-        phone_match = re.search(r'(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}', text)
-        if phone_match:
-            phone = phone_match.group(0)
 
         COMMON_SKILLS = [
             "Python", "Java", "JavaScript", "TypeScript", "React", "Angular", "Vue", "Node.js", 
@@ -152,7 +148,6 @@ async def parse_resume(file: UploadFile = File(...)):
         response_data = {
             "name": name,
             "email": email,
-            "phone": phone,
             "university": universities,
             "degree": degrees,
             "experiences": experiences,
