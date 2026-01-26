@@ -31,22 +31,22 @@ async def fetch_usage_stats(user_id: str, extpay_key: str = None):
     
     # 1. Get User Tier from ExtensionPay (Source of Truth)
     tier = "free"
+    logger.info(f"[Usage] Fetching stats for user: {user_id}. Key present: {bool(extpay_key)}")
+    
     if extpay_key:
-        logger.info("[Usage] Verifying ExtensionPay key...")
         try:
             # We call ExtensionPay directly to verify the key and get user status
             # ID is 'sendyai' as confirmed by user
-            logger.info("[Usage] Verifying ExtensionPay key...")
+            logger.info(f"[Usage] Verifying ExtensionPay key: {extpay_key[:8]}...")
             ep_url = f"https://extensionpay.com/extension/sendyai/api/v2/user?api_key={extpay_key}"
             response = py_requests.get(ep_url, timeout=5)
             if response.ok:
-                logger.info("[Usage] ExtensionPay verification successful")
                 data = response.json()
-                logger.info("[Usage] ExtensionPay response:", data)
+                logger.info(f"[Usage] ExtPay Success. User Paid: {data.get('paidAt') is not None}")
                 if data.get("paidAt"):
                     tier = "pro"
             else:
-                logger.warning(f"ExtensionPay verification failed: {response.status_code}")
+                logger.warning(f"[Usage] ExtensionPay verification failed: {response.status_code}")
         except Exception as e:
             logger.error(f"Error calling ExtensionPay API: {e}")
 
