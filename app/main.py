@@ -24,7 +24,12 @@ async def log_requests(request, call_next):
     # Log body for POST/PUT/PATCH
     if request.method in ["POST", "PUT", "PATCH"]:
         body = await request.body()
-        logger.info(f"Request Body: {body.decode('utf-8')}")
+        try:
+            decoded_body = body.decode('utf-8')
+            logger.info(f"Request Body: {decoded_body}")
+        except UnicodeDecodeError:
+            logger.info("Request Body: <binary data>")
+        
         # Re-set body so it can be read again by the router
         async def receive():
             return {"type": "http.request", "body": body}
