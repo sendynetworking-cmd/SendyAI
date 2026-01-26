@@ -95,14 +95,15 @@ async def find_email(
             logger.error(traceback.format_exc())
 
     # Log usage
-    if email and not req.skipLog:
-        try:
-            supabase.table("usage_logs").insert({
-                "user_id": user_id,
-                "action": "find_email"
-            }).execute()
-        except Exception as log_err:
-            logger.warning(f"Failed to log search usage: {log_err}")
+    if email:
+        if not req.skipLog:
+            try:
+                supabase.table("usage_logs").insert({
+                    "user_id": user_id,
+                    "action": "find_email"
+                }).execute()
+            except Exception as log_err:
+                logger.warning(f"Failed to log search usage: {log_err}")
         
         return {"email": email, "provider": "hunter", "success": True}
     else:
