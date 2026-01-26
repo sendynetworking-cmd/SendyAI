@@ -16,18 +16,6 @@ app = FastAPI(
     version="1.1.0"
 )
 
-# CORS
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=[
-        "http://localhost:8000",
-        "chrome-extension://cljgofleblhgmbhgloagholbpojhflja"
-    ],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
 @app.middleware("http")
 async def log_requests(request, call_next):
     # Log full URL with query params
@@ -45,6 +33,18 @@ async def log_requests(request, call_next):
     response = await call_next(request)
     logger.info(f"Response Status: {response.status_code}")
     return response
+
+# CORS - Must be added AFTER other middlewares to be the outermost layer
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:8000",
+        "chrome-extension://cljgofleblhgmbhgloagholbpojhflja"
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Include Routers
 app.include_router(onboarding.router)
