@@ -32,6 +32,7 @@ async def fetch_usage_stats(user_id: str, extpay_key: str = None):
     # 1. Get User Tier from ExtensionPay (Source of Truth)
     tier = "free"
     if extpay_key:
+        logger.info("[Usage] Verifying ExtensionPay key...")
         try:
             # We call ExtensionPay directly to verify the key and get user status
             # ID is 'sendyai' as confirmed by user
