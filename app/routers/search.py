@@ -61,6 +61,7 @@ async def find_email(
                 
                 logger.info("DEBUG: Calling Hunter.io API (Attempt 1)...")
                 h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params1, timeout=10)
+                logger.info(f"DEBUG: Attempt 1 URL: {h_res.url}")
                 logger.info(f"DEBUG: Attempt 1 Response Status: {h_res.status_code}")
                 
                 h_data = h_res.json()
@@ -81,6 +82,7 @@ async def find_email(
                 
                 logger.info("DEBUG: Calling Hunter.io API (Attempt 2)...")
                 h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params2, timeout=10)
+                logger.info(f"DEBUG: Attempt 2 URL: {h_res.url}")
                 logger.info(f"DEBUG: Attempt 2 Response Status: {h_res.status_code}")
                 
                 h_data = h_res.json()
