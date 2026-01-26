@@ -38,7 +38,7 @@ async def parse_resume(file: UploadFile = File(...)):
     '''
     Parse resume file and extract relevant information
     '''
-    
+
     temp_dir = tempfile.mkdtemp()
     temp_path = os.path.join(temp_dir, file.filename)
     
@@ -153,10 +153,10 @@ async def parse_resume(file: UploadFile = File(...)):
             "name": name,
             "email": email,
             "phone": phone,
-            "university": universities[:2],
-            "degree": degrees[:2],
-            "experiences": experiences[:5],
-            "skills": found_skills[:15],
+            "university": universities,
+            "degree": degrees,
+            "experiences": experiences,
+            "skills": found_skills,
             "total_exp": 0,
             "raw_summary": f"Professional profile with {len(experiences)} roles identified."
         }
