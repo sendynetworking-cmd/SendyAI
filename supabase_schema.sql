@@ -9,7 +9,6 @@ CREATE TABLE profiles (
     skills JSONB,
     total_exp NUMERIC,
     raw_summary TEXT,
-    tier TEXT DEFAULT 'free',
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
