@@ -11,7 +11,6 @@ class WorkExperience(BaseModel):
 class ProfileUpdate(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
-    phone: Optional[str] = None
     university: Optional[List[str]] = []
     degree: Optional[List[str]] = []
     experiences: Optional[List[WorkExperience]] = []

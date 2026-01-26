@@ -20,7 +20,6 @@ async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_i
             "id": user_id,
             "name": profile.name,
             "email": profile.email,
-            "phone": profile.phone,
             "university": profile.university,
             "degree": profile.degree,
             "experiences": [exp.dict() for exp in profile.experiences],

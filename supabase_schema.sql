@@ -2,7 +2,6 @@ CREATE TABLE profiles (
     id TEXT PRIMARY KEY, -- This will be the Google User ID
     name TEXT,
     email TEXT,
-    phone TEXT,
     university JSONB,
     degree JSONB,
     experiences JSONB,
