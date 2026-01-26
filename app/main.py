@@ -20,6 +20,7 @@ app = FastAPI(
 async def log_requests(request, call_next):
     # Log full URL with query params
     logger.info(f"Incoming Request: {request.method} {request.url}")
+    logger.info(f"Headers: x-extpay-key={request.headers.get('x-extpay-key')}, auth={bool(request.headers.get('Authorization'))}")
     
     # Log body for POST/PUT/PATCH
     if request.method in ["POST", "PUT", "PATCH"]:
