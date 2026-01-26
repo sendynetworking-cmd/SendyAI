@@ -24,6 +24,8 @@ async def find_email(
     # Check Usage First
     if not req.skipLog:
         await verify_usage(user_id, x_extpay_key)
+    else:
+        logger.info(f"[Search] Skipping usage check for user {user_id} (skipLog=True)")
     
     logger.info(f"DEBUG: Entering find_email for user {user_id}")
     linkedin_url = req.linkedinUrl
