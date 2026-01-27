@@ -5,10 +5,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from .routers import onboarding, user, outreach, search, usage
+from pydantic import BaseModel
 
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+class ContactRequest(BaseModel):
+    name: str
+    email: str
+    message: str
 
 app = FastAPI(
     title="Sendy AI Backend",
@@ -79,6 +85,12 @@ async def privacy_policy():
 @app.get("/404")
 async def not_found():
     return FileResponse(os.path.join(static_path, "404.html"))
+
+@app.post("/contact")
+async def post_contact(request: ContactRequest):
+    logger.info(f"Contact form submission: {request}")
+    # Future: send email or store in DB
+    return {"status": "success", "message": "Thank you for your message! We will get back to you soon."}
 
 if __name__ == "__main__":
     import uvicorn
