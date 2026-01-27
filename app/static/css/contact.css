@@ -4543,3 +4543,291 @@ html,
 html body {
           background: var(--token-69e7bba8-4398-4753-a5c7-2d0512730f18, rgb(1, 1, 15));
         }
+
+/* FAQ Sync Styles */
+
+
+      .framer-HUhru .framer-g47v3p,
+      .framer-HUhru .framer-17xu7od,
+      .framer-HUhru .framer-1fz91jb,
+      .framer-HUhru .framer-13tongy,
+      .framer-HUhru .framer-jbtpdp,
+      .framer-HUhru .framer-1ltt67j,
+      .framer-HUhru .framer-16bi1dn,
+      .framer-HUhru .framer-1wzc73i,
+      .framer-HUhru .framer-odxjag,
+      .framer-HUhru .framer-12wzwe4,
+      .framer-HUhru .framer-1cju02f,
+      .framer-HUhru .framer-qm84c5 {
+        padding: 0
+      }
+
+
+
+    .framer-HUhru .framer-1oawl1i,
+    .framer-HUhru .framer-1v49q1y,
+    .framer-HUhru .framer-1d4gfx8 {
+      --border-bottom-width: 3px;
+      --border-color: var(--token-a9c0d1fc-07e0-4911-a318-e994f661b077, #fcfcfc);
+      --border-left-width: 3px;
+      --border-right-width: 3px;
+      --border-style: solid;
+      --border-top-width: 3px;
+      will-change: var(--framer-will-change-override, transform);
+      border-radius: 40px;
+      flex-flow: column;
+      flex: none;
+      place-content: center;
+      align-items: center;
+      gap: 20px;
+      width: 100%;
+      height: min-content;
+      padding: 40px;
+      display: flex;
+      position: relative;
+      overflow: hidden
+    }
+
+
+
+    .framer-HUhru .framer-1cwpgn7-container,
+    .framer-HUhru .framer-1nnlwy8-container,
+    .framer-HUhru .framer-p1qbo7-container,
+    .framer-HUhru .framer-1uo2kqf-container,
+    .framer-HUhru .framer-1csr4ze-container {
+      flex: none;
+      width: 100%;
+      height: auto;
+      position: relative
+    }
+
+
+
+      .framer-HUhru .framer-1e34jig,
+      .framer-HUhru .framer-1js0sn4,
+      .framer-HUhru .framer-1sys5x9,
+      .framer-HUhru .framer-tnvk5r,
+      .framer-HUhru .framer-1r91baj {
+        padding: 16px
+      }
+
+
+
+      .framer-HUhru .framer-18tenaw,
+      .framer-HUhru .framer-4p8meh,
+      .framer-HUhru .framer-1jw66fg,
+      .framer-HUhru .framer-13msm4n {
+        gap: 20px
+      }
+
+
+
+      .framer-HUhru .framer-1fz91jb,
+      .framer-HUhru .framer-13tongy,
+      .framer-HUhru .framer-1ltt67j,
+      .framer-HUhru .framer-16bi1dn,
+      .framer-HUhru .framer-1wzc73i,
+      .framer-HUhru .framer-12wzwe4,
+      .framer-HUhru .framer-1cju02f,
+      .framer-HUhru .framer-qm84c5 {
+        padding: 0
+      }
+
+
+
+    .framer-HUhru .framer-18tenaw,
+    .framer-HUhru .framer-4p8meh,
+    .framer-HUhru .framer-1jw66fg,
+    .framer-HUhru .framer-d5o4pe,
+    .framer-HUhru .framer-13msm4n {
+      -webkit-backdrop-filter: blur();
+      backdrop-filter: blur();
+      flex-flow: column;
+      flex: 1 0 0;
+      place-content: center;
+      align-items: center;
+      gap: 40px;
+      width: 1px;
+      height: min-content;
+      padding: 0;
+      display: flex;
+      position: relative;
+      overflow: visible
+    }
+
+
+
+    .framer-HUhru .framer-1k33i9-container,
+    .framer-HUhru .framer-nkug0y-container {
+      z-index: 2;
+      flex: none;
+      width: 100%;
+      height: auto;
+      position: relative
+    }
+
+
+
+    .framer-e3EEh.framer-v-1lci9on .framer-p0f648,
+    .framer-e3EEh.framer-v-1lci9on .framer-dykwnc,
+    .framer-e3EEh.framer-v-1p5ow48 .framer-p0f648,
+    .framer-e3EEh.framer-v-1p5ow48 .framer-dykwnc {
+      padding: 0
+    }
+
+
+
+    .framer-e3EEh .framer-dykwnc {
+      flex-flow: column;
+      flex: none;
+      place-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      height: min-content;
+      padding: 0 250px;
+      display: flex;
+      position: relative;
+      overflow: hidden
+    }
+
+
+
+      .framer-HUhru .framer-3asmgo {
+        gap: 10px
+      }
+
+
+
+    .framer-e3EEh .framer-1l1pq0n-container {
+      flex: none;
+      width: auto;
+      height: auto;
+      position: relative
+    }
+
+
+
+    .framer-HUhru .framer-3asmgo {
+      flex-flow: column;
+      flex: none;
+      place-content: flex-start;
+      align-items: flex-start;
+      gap: 14px;
+      width: 100%;
+      max-width: 600px;
+      height: min-content;
+      padding: 0;
+      display: flex;
+      position: relative;
+      overflow: visible
+    }
+
+
+
+      .framer-HUhru .framer-1e34jig,
+      .framer-HUhru .framer-1js0sn4,
+      .framer-HUhru .framer-1sys5x9,
+      .framer-HUhru .framer-tnvk5r,
+      .framer-HUhru .framer-1r91baj {
+        padding: 64px
+      }
+
+
+
+      .framer-HUhru .framer-1v49q1y,
+      .framer-HUhru .framer-1d4gfx8 {
+        padding: 12px
+      }
+
+
+
+    .framer-HUhru .framer-19oq9ym-container,
+    .framer-HUhru .framer-uclf3x-container,
+    .framer-HUhru .framer-uxj9bf-container {
+      flex: none;
+      width: auto;
+      height: auto;
+      position: relative
+    }
+
+
+
+    .framer-e3EEh .framer-1sib0ca {
+      white-space: pre-wrap;
+      word-break: break-word;
+      word-wrap: break-word;
+      flex: 1 0 0;
+      width: 1px;
+      height: auto;
+      position: relative
+    }
+
+
+
+    .framer-HUhru .framer-1e34jig,
+    .framer-HUhru .framer-1js0sn4,
+    .framer-HUhru .framer-1sys5x9,
+    .framer-HUhru .framer-1wzc73i,
+    .framer-HUhru .framer-qm84c5 {
+      flex-flow: column;
+      flex: none;
+      place-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      height: min-content;
+      padding: 100px;
+      display: flex;
+      position: relative;
+      overflow: visible
+    }
+
+
+
+    .framer-HUhru .framer-bcs7i6,
+    .framer-HUhru .framer-1xugjjn,
+    .framer-HUhru .framer-8yzrde,
+    .framer-HUhru .framer-tnvk5r,
+    .framer-HUhru .framer-1r91baj {
+      flex-flow: row;
+      flex: none;
+      place-content: center;
+      align-items: center;
+      gap: 0;
+      width: 100%;
+      max-width: 1320px;
+      height: min-content;
+      padding: 0;
+      display: flex;
+      position: relative;
+      overflow: visible
+    }
+
+
+
+    .framer-e3EEh .framer-p0f648 {
+      flex-flow: row;
+      flex: none;
+      place-content: center;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      height: min-content;
+      padding: 0 100px;
+      display: flex;
+      position: relative;
+      overflow: visible
+    }
+
+
+
+    .framer-e3EEh .framer-qzyvxv {
+      white-space: pre-wrap;
+      word-break: break-word;
+      word-wrap: break-word;
+      flex: none;
+      width: 100%;
+      height: auto;
+      position: relative
+    }
