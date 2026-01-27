@@ -8,8 +8,46 @@ async function init() {
         try { localKey = JSON.parse(localKey); } catch (e) { }
     }
 
-    const btnFree = document.getElementById('btn-free');
-    const btnPro = document.getElementById('btn-pro');
+    const btnFrees = document.querySelectorAll('.btn-free');
+    const btnPros = document.querySelectorAll('.btn-pro');
+
+    const updateBtnText = (btn, text) => {
+        if (!btn) return;
+        const p = btn.querySelector('p');
+        if (p) p.textContent = text;
+        else btn.textContent = text;
+    }
+
+    const setBtnState = (btn, text, disabled = false, isConflict = false) => {
+        if (!btn) return;
+        updateBtnText(btn, text);
+        if (disabled) btn.style.pointerEvents = 'none';
+
+        if (isConflict) {
+            btn.style.background = '#10b981'; // Green
+            btn.style.borderColor = '#10b981';
+            btn.onclick = (e) => {
+                e.preventDefault();
+                chrome.runtime.sendMessage('cljgofleblhgmbhgloagholbpojhflja', {
+                    action: 'syncPaidKey',
+                    apiKey: localKey
+                }, (response) => {
+                    if (response?.success) {
+                        alert('Pro Status Synced! You can now close this tab.');
+                        updateBtnText(btn, 'Synced & Ready');
+                        btn.style.pointerEvents = 'none';
+                    } else {
+                        alert('Sync failed - ensure the extension is open.');
+                    }
+                });
+            };
+        } else {
+            btn.onclick = (e) => {
+                e.preventDefault();
+                extpay.openPaymentPage();
+            };
+        }
+    };
 
     // Scenario: User visited from extension with a key
     if (extensionKey) {
@@ -19,24 +57,7 @@ async function init() {
 
             if (localUser.paidAt) {
                 console.log('[Home] Conflict: Browser is Pro, but Extension is not. Showing Recovery.');
-                btnPro.textContent = 'Sync Pro to Extension';
-                btnPro.style.background = '#10b981'; // Green
-                btnPro.style.borderColor = '#10b981';
-
-                btnPro.onclick = () => {
-                    chrome.runtime.sendMessage('cljgofleblhgmbhgloagholbpojhflja', {
-                        action: 'syncPaidKey',
-                        apiKey: localKey
-                    }, (response) => {
-                        if (response?.success) {
-                            alert('Pro Status Synced! You can now close this tab.');
-                            btnPro.textContent = 'Synced & Ready';
-                            btnPro.disabled = true;
-                        } else {
-                            alert('Sync failed - ensure the extension is open.');
-                        }
-                    });
-                };
+                btnPros.forEach(btn => setBtnState(btn, 'Sync Pro to Extension', false, true));
                 return;
             }
         }
@@ -48,15 +69,17 @@ async function init() {
 
     const user = await extpay.getUser();
     if (user.paid) {
-        btnPro.textContent = 'Current Plan';
-        btnPro.disabled = true;
-        btnFree.textContent = 'Free Tier';
-        btnFree.disabled = true;
+        btnPros.forEach(btn => {
+            updateBtnText(btn, 'Current Plan');
+            btn.style.pointerEvents = 'none';
+        });
+        btnFrees.forEach(btn => {
+            updateBtnText(btn, 'Free Tier');
+            btn.style.pointerEvents = 'none';
+        });
+    } else {
+        btnPros.forEach(btn => setBtnState(btn, 'Get Started'));
     }
-
-    btnPro.addEventListener('click', () => {
-        extpay.openPaymentPage();
-    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
