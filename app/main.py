@@ -68,6 +68,18 @@ async def root():
     # Serve index.html (renamed home.html) at the root
     return FileResponse(os.path.join(static_path, "index.html"))
 
+@app.get("/contact")
+async def contact():
+    return FileResponse(os.path.join(static_path, "contact.html"))
+
+@app.get("/privacy-policy")
+async def privacy_policy():
+    return FileResponse(os.path.join(static_path, "privacy.html"))
+
+@app.get("/404")
+async def not_found():
+    return FileResponse(os.path.join(static_path, "404.html"))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)
