@@ -43,68 +43,87 @@ async def generate_outreach(
     edu_list = "\n".join([f"- {e.get('school')}: {e.get('degree')} ({e.get('dates')})" for e in recipient.get('education', [])])
     honors_list = "\n".join([f"- {h.get('title')} from {h.get('issuer')} ({h.get('date')})" for h in recipient.get('honors', [])])
 
+    recipient_first_name = (recipient.get("name") or "").strip().split(" ")[0] or "there"
+
     system_prompt = f"""
     You are an expert networking assistant. You help high-achieving students draft initial outreach emails to busy professionals in finance, consulting, tech, and law.
 
-GENERAL STYLE RULES:
-- Audience: Busy professionals. Time is money.
-- Tone: Authentic, high-achieving student. Polite, confident, not desperate.
-- STATUS AWARENESS: You are a student reaching out to a mentor. Avoid "Peer-Talk." Do not speak as if you have the same professional capacity or aptitude as the recipient.
-- NEUTRAL SELF-PRESENTATION: When describing the student's background, use neutral, factual language. Avoid self-aggrandizing descriptors like "extensive," "deep," "expert," or "significant." (e.g., use "my background in research" instead of "my extensive research").
-- SUCCINCTNESS IS KEY: Be concise. Get to the point immediately.
-- PUNCHY PHRASING: Drop fluff words. Avoid empty jargon like "landscapes," "strategic insights," or "nuanced perspectives." Use raw and direct terms (e.g., "geopolitics" instead of "geopolitical landscape").
-- NATURAL LANGUAGE: Write like a human. Use "someone" instead of "an individual" or "a professional." 
-- NO Generic Flattery: Never use phrases like "I have always admired..." or "It is inspiring to see..."
-- Realism: Never fabricate facts. Make reasonable inferences based on the student's actual experience.
+    CONTEXT (DO NOT IGNORE):
+    SENDER: {user['name']}
+    SENDER BACKGROUND: {user['raw_summary']}
+    SENDER SKILLS: {', '.join(user.get('skills', []))}
 
-⚠️ CRITICAL OUTPUT RULE:
-Output ONLY the raw email text. DO NOT include any structural labels or markers (e.g., "SUBJECT LINE:", "PARAGRAPH 1:").
+    RECIPIENT: {recipient.get('name')}
+    RECIPIENT HEADLINE: {recipient.get('headline')}
 
-YOUR TASK:
-Perform a two-step process internally, then output ONLY the final email text with NO LABELS.
+    RECIPIENT EXPERIENCE:
+    {exp_list}
 
-STEP 1 - ANALYZE CONTEXT (Internal):
-1) INFER INTERESTS: Lightly infer the student's specific interest based on their past roles.
-2) IDENTIFY THE BRIDGE: Select the SINGLE strongest narrative hook (Exact or Thematic match).
+    RECIPIENT EDUCATION:
+    {edu_list}
 
-STEP 2 - WRITE EMAIL (Output ONLY the final text):
+    RECIPIENT HONORS & AWARDS:
+    {honors_list}
 
-Start with the subject line on its own line:
-Reaching Out – [connection snippet] Interested in [their current company]
-- Make sure the connection snippet is accurate to whether the user is a student or an alumni/professional. 
+    GENERAL STYLE RULES:
+    - Audience: Busy professionals. Time is money.
+    - Tone: Authentic, high-achieving student. Polite, confident, not desperate.
+    - STATUS AWARENESS: You are a student reaching out to a mentor. Avoid "Peer-Talk." Do not speak as if you have the same professional capacity or aptitude as the recipient.
+    - NEUTRAL SELF-PRESENTATION: When describing the student's background, use neutral, factual language. Avoid self-aggrandizing descriptors like "extensive," "deep," "expert," or "significant."
+    - SUCCINCTNESS IS KEY: Be concise. Get to the point immediately.
+    - PUNCHY PHRASING: Drop fluff words. Avoid empty jargon like "landscapes," "strategic insights," or "nuanced perspectives."
+    - NATURAL LANGUAGE: Write like a human. Use "someone" instead of "an individual" or "a professional."
+    - NO Generic Flattery: Never use phrases like "I have always admired..." or "It is inspiring to see..."
+    - Realism: Never fabricate facts. Make reasonable inferences based on the student's actual experience.
 
-Then a blank line, then:
-Hi {recipientFirstName},
+    ⚠️ CRITICAL OUTPUT RULE:
+    Output ONLY the raw email text. DO NOT include any structural labels or markers (e.g., "SUBJECT LINE:", "PARAGRAPH 1:").
+    Output ONLY the final email text (subject line + body). No placeholders.
 
-First paragraph (The Hook):
-- "Hope you are doing well."
-- Introduce yourself (name, school, major/year, key status).
-- Sentence 3: Follow this format: "I came across your profile while researching [Their Company] and..." then complete the sentence by highlighting a **succinct thematic combination** or specific pivot. 
-- Constraint: Keep it succinct. Do NOT list their entire resume path.
+    YOUR TASK:
+    Perform a two-step process internally, then output ONLY the final email text with NO LABELS.
 
-Second paragraph (The Meat):
-- 1-2 succinct sentences connecting your background to that specific theme.
-- Ask a PERSONAL career decision question tied to that theme.
-- **CONSTRAINT (Substance Over Status):** Do NOT list their past employers/companies just to prove you did research. Only reference past roles if they are the *subject* of the transition question.
-- End with: "Would you be available for a quick call to share your perspective?"
+    STEP 1 - ANALYZE CONTEXT (Internal):
+    1) INFER INTERESTS: Lightly infer the student's specific interest based on their background and skills.
+    2) IDENTIFY THE BRIDGE: Select the SINGLE strongest narrative hook (Exact or Thematic match) using recipient experience/education/honors ONLY if relevant.
 
-Third paragraph (The Narrative Bridge):
-- Use the strongest shared attribute/connection.
-- **FOUNDATION VS. DESTINATION RULE (Anti-Conceit):** 
-  - The "shared" part must be the **Foundation** (what you both have in common: a school, a major, or a raw subject matter interest like "geopolitics" or "history").
-  - The "aspirational" part must be the **Destination** (the recipient's current role/field, job function or professional application).
-- **NEVER** claim a shared interest in the recipient's job function or professional application (e.g., avoid "shared interest in applying analysis to themes").  - DO say: "Given our shared interest in [Foundation], it would be great to connect with **someone** applying that background to [Destination]..." 
-- FLOW CHECK: If this attribute was mentioned in Para 2, use a transitional phrase (e.g., "Given that shared background in...").
-- **CORRECT FORMAT:** "Given our shared interest in [Foundation], it would be great to connect with **someone** applying that background to [Destination]."
-- End with exactly: "I've attached my resume in case it's helpful background."
+    STEP 2 - WRITE EMAIL (Output ONLY the final text):
 
-Fourth paragraph (Closing):
-I look forward to hearing back from you!
+    Start with the subject line on its own line:
+    Reaching Out – [connection snippet] Interested in [their current company]
+    - Make sure the connection snippet is accurate to whether the sender is a student.
 
-Sign off with:
-Best,
-{studentName}
-{userData.school} {gradYear}"""
+    Then a blank line, then:
+    Hi {recipient_first_name},
+
+    First paragraph (The Hook):
+    - Include the phrase: "Hope you are doing well."
+    - Introduce yourself (name + key student status from SENDER BACKGROUND; do NOT invent school/major/year if not present).
+    - Sentence 3 must follow this format exactly:
+    "I came across your profile while researching [Their Company] and..." then finish by highlighting a succinct thematic combination or specific pivot.
+    - Keep it succinct. Do NOT list their entire resume path.
+
+    Second paragraph (The Meat):
+    - 1-2 succinct sentences connecting SENDER BACKGROUND/SKILLS to that specific theme.
+    - Ask a personal career decision question tied to that theme.
+    - Do NOT list their past employers/companies just to prove you did research. Only reference past roles if they are the subject of the transition question.
+    - End with exactly: "Would you be available for a quick call to share your perspective?"
+
+    Third paragraph (The Narrative Bridge):
+    - Use the strongest shared attribute/connection drawn from the provided context.
+    - FOUNDATION VS. DESTINATION RULE:
+    - Foundation: common school, major/field, or raw subject interest.
+    - Destination: recipient's current role/field/job function/professional application.
+    - Use this exact sentence structure:
+    "Given our shared interest in [Foundation], it would be great to connect with someone applying that background to [Destination]."
+    - End with exactly: "I've attached my resume in case it's helpful background."
+
+    Fourth paragraph (Closing):
+    I look forward to hearing back from you!
+
+    Best,
+    {user['name']}
+    """
 
     try:
         response = genai_client.models.generate_content(
