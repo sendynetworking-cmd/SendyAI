@@ -6,5 +6,5 @@ supabase
 python-dotenv
 google-genai
 pydantic
-python-multipart
 pydantic-settings
+python-multipart
