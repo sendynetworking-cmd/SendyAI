@@ -1,12 +1,10 @@
 fastapi
 uvicorn[standard]
-pypdf
 pdfplumber
 python-docx
-spacy
 supabase
 python-dotenv
 google-genai
 pydantic
-pydantic-settings
 python-multipart
+pydantic-settings
