@@ -20,9 +20,6 @@ async def generate_outreach(
     Generate outreach email for a given recipient profile
     '''
     
-    # Check Usage First
-    await verify_usage(user_id, x_extpay_key)
-    
     if not supabase or not genai_client:
         raise HTTPException(status_code=500, detail="Services not configured")
 
@@ -131,15 +128,6 @@ async def generate_outreach(
             contents=system_prompt
         )
         
-        # Log usage to Supabase
-        try:
-            supabase.table("usage_logs").insert({
-                "user_id": user_id,
-                "action": "generate_email"
-            }).execute()
-        except Exception as log_err:
-            logger.warning(f"Failed to log usage: {log_err}")
-
         return {
             "success": True,
             "email": response.text
