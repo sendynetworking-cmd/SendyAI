@@ -1,6 +1,6 @@
 import logging
 import traceback
-import httpx
+import requests as py_requests
 from fastapi import APIRouter, Depends, HTTPException, Header
 from .usage import verify_usage
 from ..schemas.profile import SearchRequest
@@ -43,6 +43,9 @@ async def find_email(
     hunter_key = settings.HUNTER_API_KEY
     if hunter_key:
         try:
+            # First attempt parameters
+            params1 = {"api_key": hunter_key}
+            
             # Extract handle from URL if present
             handle = None
             if linkedin_url:
@@ -52,39 +55,42 @@ async def find_email(
                     if idx + 1 < len(parts):
                         handle = parts[idx + 1]
             
-            async with httpx.AsyncClient() as client:
-                if handle:
-                    params1 = {"api_key": hunter_key, "linkedin_handle": handle}
-                    logger.info(f"DEBUG: Attempt 1 - Using LinkedIn Handle: {handle}")
-                    
-                    logger.info("DEBUG: Calling Hunter.io API (Attempt 1)...")
-                    h_res = await client.get("https://api.hunter.io/v2/email-finder", params=params1, timeout=10)
-                    logger.info(f"DEBUG: Attempt 1 Response Status: {h_res.status_code}")
-                    
-                    if h_res.status_code == 200:
-                        h_data = h_res.json()
-                        if h_data.get("data") and h_data["data"].get("email"):
-                            email = h_data["data"]["email"]
-                            logger.info(f"Hunter found email in Attempt 1: {email}")
+            if handle:
+                params1["linkedin_handle"] = handle
+                logger.info(f"DEBUG: Attempt 1 - Using LinkedIn Handle: {handle}")
                 
-                # 2. ATTEMPT 2: FALLBACK TO FULL NAME + COMPANY
-                if not email and full_name and company:
-                    params2 = {
-                        "api_key": hunter_key,
-                        "full_name": full_name,
-                        "company": company
-                    }
-                    logger.info(f"DEBUG: Attempt 2 - Using Name/Company Search: {full_name} @ {company}")
-                    
-                    logger.info("DEBUG: Calling Hunter.io API (Attempt 2)...")
-                    h_res = await client.get("https://api.hunter.io/v2/email-finder", params=params2, timeout=10)
-                    logger.info(f"DEBUG: Attempt 2 Response Status: {h_res.status_code}")
-                    
-                    if h_res.status_code == 200:
-                        h_data = h_res.json()
-                        if h_data.get("data") and h_data["data"].get("email"):
-                            email = h_data["data"]["email"]
-                            logger.info(f"Hunter found email in Attempt 2: {email}")
+                logger.info("DEBUG: Calling Hunter.io API (Attempt 1)...")
+                h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params1, timeout=10)
+                logger.info(f"DEBUG: Attempt 1 URL: {h_res.url}")
+                logger.info(f"DEBUG: Attempt 1 Response Status: {h_res.status_code}")
+                
+                h_data = h_res.json()
+                if h_data.get("data") and h_data["data"].get("email"):
+                    email = h_data["data"]["email"]
+                    logger.info(f"Hunter found email in Attempt 1: {email}")
+                else:
+                    logger.info("DEBUG: Attempt 1 failed or returned no email.")
+            
+            # 2. ATTEMPT 2: FALLBACK TO FULL NAME + COMPANY
+            if not email and full_name and company:
+                params2 = {
+                    "api_key": hunter_key,
+                    "full_name": full_name,
+                    "company": company
+                }
+                logger.info(f"DEBUG: Attempt 2 - Using Name/Company Search: {full_name} @ {company}")
+                
+                logger.info("DEBUG: Calling Hunter.io API (Attempt 2)...")
+                h_res = py_requests.get("https://api.hunter.io/v2/email-finder", params=params2, timeout=10)
+                logger.info(f"DEBUG: Attempt 2 URL: {h_res.url}")
+                logger.info(f"DEBUG: Attempt 2 Response Status: {h_res.status_code}")
+                
+                h_data = h_res.json()
+                if h_data.get("data") and h_data["data"].get("email"):
+                    email = h_data["data"]["email"]
+                    logger.info(f"Hunter found email in Attempt 2: {email}")
+                else:
+                    logger.info("DEBUG: Attempt 2 failed or returned no email.")
 
         except Exception as e:
             logger.error(f"Hunter integration error: {e}")
@@ -94,7 +100,7 @@ async def find_email(
     if email:
         if not req.skipLog:
             try:
-                await supabase.table("usage_logs").insert({
+                supabase.table("usage_logs").insert({
                     "user_id": user_id,
                     "action": "find_email"
                 }).execute()
