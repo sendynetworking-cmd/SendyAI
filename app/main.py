@@ -51,8 +51,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:8000",
-        "chrome-extension://cljgofleblhgmbhgloagholbpojhflja"
+        "https://www.sendynetworking.io",
+        "https://sendynetworking.io"
     ],
+    allow_origin_regex=r"chrome-extension://.*",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
