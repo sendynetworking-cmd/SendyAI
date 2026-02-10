@@ -28,7 +28,7 @@ async def generate_outreach(
 
     # Lookup user profile
     try:
-        user_profile = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+        user_profile = await supabase.table("profiles").select("*").eq("id", user_id).single().execute()
         if not user_profile.data:
             logger.warning(f"Profile not found for user_id: {user_id}")
             raise HTTPException(status_code=400, detail="User profile not set up. Please complete onboarding in the extension options.")
@@ -126,14 +126,14 @@ async def generate_outreach(
     """
 
     try:
-        response = genai_client.models.generate_content(
+        response = await genai_client.aio.models.generate_content(
             model=settings.GEMINI_MODEL,
             contents=system_prompt
         )
         
         # Log usage to Supabase
         try:
-            supabase.table("usage_logs").insert({
+            await supabase.table("usage_logs").insert({
                 "user_id": user_id,
                 "action": "generate_email"
             }).execute()

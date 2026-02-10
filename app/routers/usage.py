@@ -1,5 +1,5 @@
 import logging
-import requests as py_requests
+import httpx
 from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, Header
 from ..core.clients import supabase
@@ -35,23 +35,23 @@ async def fetch_usage_stats(user_id: str, extpay_key: str = None):
     
     if extpay_key:
         try:
-            # We call ExtensionPay directly to verify the key and get user status
-            # ID is 'sendyai' as confirmed by user
             logger.info(f"[Usage] Verifying ExtensionPay key: {extpay_key[:8]}...")
             ep_url = f"https://extensionpay.com/extension/sendyai/api/v2/user?api_key={extpay_key}"
-            response = py_requests.get(ep_url, timeout=5)
-            if response.ok:
-                data = response.json()
-                logger.info(f"[Usage] ExtPay Success. User Paid: {data.get('paidAt') is not None}")
-                if data.get("paidAt"):
-                    tier = "pro"
-            else:
-                logger.warning(f"[Usage] ExtensionPay verification failed: {response.status_code}")
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(ep_url, timeout=5)
+                if response.status_code == 200:
+                    data = response.json()
+                    logger.info(f"[Usage] ExtPay Success. User Paid: {data.get('paidAt') is not None}")
+                    if data.get("paidAt"):
+                        tier = "pro"
+                else:
+                    logger.warning(f"[Usage] ExtensionPay verification failed: {response.status_code}")
         except Exception as e:
             logger.error(f"Error calling ExtensionPay API: {e}")
 
     # 2. Query usage_logs for the current week
-    usage_res = supabase.table("usage_logs") \
+    usage_res = await supabase.table("usage_logs") \
         .select("id", count="exact") \
         .eq("user_id", user_id) \
         .gte("date_accessed", monday.isoformat()) \

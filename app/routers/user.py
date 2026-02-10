@@ -16,7 +16,7 @@ async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_i
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
     try:
-        supabase.table("profiles").upsert({
+        await supabase.table("profiles").upsert({
             "id": user_id,
             "name": profile.name,
             "email": profile.email,

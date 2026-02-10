@@ -88,7 +88,7 @@ async def parse_resume(file: UploadFile = File(...)):
         """
 
         try:
-            response = genai_client.models.generate_content(
+            response = await genai_client.aio.models.generate_content(
                 model="gemini-2.0-flash",
                 contents=prompt
             )
