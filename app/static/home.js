@@ -10,7 +10,6 @@ async function init() {
 
     const btnFrees = document.querySelectorAll('.btn-free');
     const btnPros = document.querySelectorAll('.btn-pro');
-    const btnLogins = document.querySelectorAll('.btn-login');
     const extensionId = 'cljgofleblhgmbhgloagholbpojhflja'; // Update this to your real extension ID if it changes
 
     const updateBtnText = (btn, text) => {
@@ -74,17 +73,11 @@ async function init() {
     }
 
     // Standard behavior from documentation: openPaymentPage() on click
-    btnPros.forEach(btn => {
+    // Scenario: User clicks either button -> trigger payment page
+    [...btnFrees, ...btnPros].forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             extpay.openPaymentPage();
-        });
-    });
-
-    btnLogins.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            extpay.openLoginPage();
         });
     });
 }
