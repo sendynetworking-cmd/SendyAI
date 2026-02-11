@@ -10,6 +10,8 @@ async function init() {
 
     const btnFrees = document.querySelectorAll('.btn-free');
     const btnPros = document.querySelectorAll('.btn-pro');
+    const btnLogins = document.querySelectorAll('.btn-login');
+    const extensionId = 'cljgofleblhgmbhgloagholbpojhflja'; // Update this to your real extension ID if it changes
 
     const updateBtnText = (btn, text) => {
         if (!btn) return;
@@ -33,7 +35,7 @@ async function init() {
                         btn.style.borderColor = '#10b981';
                         btn.addEventListener('click', (e) => {
                             e.preventDefault();
-                            chrome.runtime.sendMessage('cljgofleblhgmbhgloagholbpojhflja', {
+                            chrome.runtime.sendMessage(extensionId, {
                                 action: 'syncPaidKey',
                                 apiKey: localKey
                             }, (response) => {
@@ -76,6 +78,13 @@ async function init() {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
             extpay.openPaymentPage();
+        });
+    });
+
+    btnLogins.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            extpay.openLoginPage();
         });
     });
 }
