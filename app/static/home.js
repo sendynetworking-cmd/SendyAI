@@ -73,13 +73,22 @@ async function init() {
     }
 
     // Standard behavior from documentation: openPaymentPage() on click
-    // Scenario: User clicks either button -> trigger payment page
-    [...btnFrees, ...btnPros].forEach(btn => {
+    const registerClick = (btn, type) => {
+        console.log(`[Home] Registering click handler for ${type} button:`, btn);
         btn.addEventListener('click', (e) => {
+            console.log(`[Home] ${type} button clicked! Triggering ExtPay.`);
             e.preventDefault();
-            extpay.openPaymentPage();
+            e.stopPropagation();
+            try {
+                extpay.openPaymentPage();
+            } catch (err) {
+                console.error('[Home] Failed to open payment page:', err);
+            }
         });
-    });
+    };
+
+    btnFrees.forEach(btn => registerClick(btn, 'Free'));
+    btnPros.forEach(btn => registerClick(btn, 'Pro'));
 }
 
 document.addEventListener('DOMContentLoaded', init);
