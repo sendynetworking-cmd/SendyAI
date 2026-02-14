@@ -8,10 +8,8 @@ async function init() {
         try { localKey = JSON.parse(localKey); } catch (e) { }
     }
 
-    const btnFrees = document.querySelectorAll('.btn-free');
-    const btnPros = document.querySelectorAll('.btn-pro');
-    const extensionId = 'cljgofleblhgmbhgloagholbpojhflja'; // Update this to your real extension ID if it changes
-
+    const pricingButtons = document.querySelectorAll('.pricing-button');
+    const extensionId = 'cljgofleblhgmbhgloagholbpojhflja';
     const updateBtnText = (btn, text) => {
         if (!btn) return;
         const p = btn.querySelector('p');
@@ -21,74 +19,53 @@ async function init() {
 
     // Scenario: User visited from extension with a key
     if (extensionKey) {
-        // Check if the current browser already has a PAID identity
         if (localKey && localKey !== extensionKey) {
             try {
                 const localUser = await fetch(`https://extensionpay.com/extension/sendyai/api/v2/user?api_key=${localKey}`).then(r => r.json());
-
                 if (localUser.paidAt) {
-                    console.log('[Home] Conflict: Browser is Pro, but Extension is not. Showing Recovery.');
-                    btnPros.forEach(btn => {
-                        updateBtnText(btn, 'Sync Pro to Extension');
-                        btn.style.background = '#10b981'; // Green
-                        btn.style.borderColor = '#10b981';
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            chrome.runtime.sendMessage(extensionId, {
-                                action: 'syncPaidKey',
-                                apiKey: localKey
-                            }, (response) => {
-                                if (response?.success) {
-                                    alert('Pro Status Synced! You can now close this tab.');
-                                    updateBtnText(btn, 'Synced & Ready');
-                                    btn.style.pointerEvents = 'none';
-                                } else {
-                                    alert('Sync failed - ensure the extension is open.');
-                                }
+                    console.log('[Home] Sync required: Browser is Pro, Extension is not.');
+                    pricingButtons.forEach(btn => {
+                        if (btn.classList.contains('btn-pro')) {
+                            updateBtnText(btn, 'Sync Pro Status');
+                            btn.style.background = '#10b981';
+                            btn.addEventListener('click', (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                chrome.runtime.sendMessage(extensionId, { action: 'syncPaidKey', apiKey: localKey }, (res) => {
+                                    if (res?.success) alert('Pro Status Synced!');
+                                });
                             });
-                        });
+                        }
                     });
                     return;
                 }
-            } catch (e) {
-                console.error('[Home] Error fetching local user for sync:', e);
-            }
+            } catch (e) { }
         }
-
-        // No conflict or local not paid, safe to use extension's key
         localStorage.setItem('extensionpay_api_key', JSON.stringify(extensionKey));
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     const user = await extpay.getUser();
-    if (user.paid) {
-        btnPros.forEach(btn => {
-            updateBtnText(btn, 'Current Plan');
+    pricingButtons.forEach(btn => {
+        // 1. Text updates based on user status
+        if (user.paid) {
+            updateBtnText(btn, btn.classList.contains('btn-pro') ? 'Current Plan' : 'Free Tier');
             btn.style.pointerEvents = 'none';
-        });
-        btnFrees.forEach(btn => {
-            updateBtnText(btn, 'Free Tier');
-            btn.style.pointerEvents = 'none';
-        });
-    }
+            btn.style.opacity = '0.7';
+        }
 
-    // Standard behavior from documentation: openPaymentPage() on click
-    const registerClick = (btn, type) => {
-        console.log(`[Home] Registering click handler for ${type} button:`, btn);
+        // 2. Default Click Handler for Payment
         btn.addEventListener('click', (e) => {
-            console.log(`[Home] ${type} button clicked! Triggering ExtPay.`);
+            console.log('[Home] Pricing click -> opening payment page');
             e.preventDefault();
             e.stopPropagation();
             try {
                 extpay.openPaymentPage();
             } catch (err) {
-                console.error('[Home] Failed to open payment page:', err);
+                console.error('[Home] Payment error:', err);
             }
         });
-    };
-
-    btnFrees.forEach(btn => registerClick(btn, 'Free'));
-    btnPros.forEach(btn => registerClick(btn, 'Pro'));
+    });
 }
 
 document.addEventListener('DOMContentLoaded', init);
