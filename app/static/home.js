@@ -10,51 +10,86 @@ async function init() {
     }
 
     const extensionId = 'cljgofleblhgmbhgloagholbpojhflja';
+
+    // Helper to find "Get Started" or "Pro" style buttons
+    const isPricingButton = (el) => {
+        const text = el.textContent || '';
+        const lowerText = text.toLowerCase();
+        // Match common button variations in the Framer export
+        const matchesText = lowerText.includes('get started') ||
+            lowerText.includes('upgrade') ||
+            lowerText.includes('sync pro status') ||
+            lowerText.includes('current plan');
+
+        // Ensure it's likely a button (has a link or a framer attribute)
+        return matchesText && (el.tagName === 'A' || el.hasAttribute('data-framer-name'));
+    };
+
+    const isProButton = (el) => {
+        let p = el;
+        while (p && p !== document.body) {
+            if (p.textContent.includes('Pro') && !p.textContent.includes('Free Plan')) return true;
+            p = p.parentElement;
+        }
+        return false;
+    };
+
     const updateBtnText = (btn, text) => {
         if (!btn) return;
         const p = btn.querySelector('p');
         if (p) p.textContent = text;
         else btn.textContent = text;
-    }
+    };
 
     // 1. GLOBAL CLICK DELEGATION (Reliable even if DOM changes)
-    // Use capture: true to catch events before Framer/React can stop them
     document.addEventListener('click', (e) => {
-        const btn = e.target.closest('.pricing-button');
+        // Look for the starting element or its ancestors that look like our buttons
+        let btn = e.target;
+        while (btn && btn !== document.body && !isPricingButton(btn)) {
+            btn = btn.parentElement;
+        }
+
         if (!btn) return;
 
-        console.log('[Home] Pricing click -> opening payment page');
-        e.preventDefault();
-        e.stopPropagation();
+        const text = btn.textContent.toLowerCase();
 
-        try {
-            extpay.openPaymentPage();
-        } catch (err) {
-            console.error('[Home] Payment error:', err);
+        // Handle Sync Logic
+        if (text.includes('sync pro status')) {
+            console.log('[Home] Sync click detected');
+            e.preventDefault();
+            e.stopPropagation();
+            chrome.runtime.sendMessage(extensionId, { action: 'syncPaidKey', apiKey: localKey }, (res) => {
+                if (res?.success) alert('Pro Status Synced!');
+            });
+            return;
+        }
+
+        // Default Payment Logic
+        if (text.includes('get started') || text.includes('upgrade')) {
+            console.log('[Home] Pricing click -> opening payment page');
+            e.preventDefault();
+            e.stopPropagation();
+            try {
+                extpay.openPaymentPage();
+            } catch (err) {
+                console.error('[Home] Payment error:', err);
+            }
         }
     }, { capture: true });
 
     // 2. STATUS & SYNC LOGIC
-    // Scenario: User visited from extension with a key
     if (extensionKey) {
         if (localKey && localKey !== extensionKey) {
             try {
                 const localUser = await fetch(`https://extensionpay.com/extension/sendyai/api/v2/user?api_key=${localKey}`).then(r => r.json());
                 if (localUser.paidAt) {
                     console.log('[Home] Sync required: Browser is Pro, Extension is not.');
-                    // Note: This specific button logic will need to be re-applied if DOM changes
-                    // but the global listener above handles the default payment flow.
-                    const proBtns = document.querySelectorAll('.pricing-button.btn-pro');
-                    proBtns.forEach(btn => {
-                        updateBtnText(btn, 'Sync Pro Status');
-                        btn.style.background = '#10b981';
-                        // Add sync-specific click listener
-                        btn.addEventListener('click', (ev) => {
-                            ev.stopImmediatePropagation(); // Prevent standard payment flow
-                            chrome.runtime.sendMessage(extensionId, { action: 'syncPaidKey', apiKey: localKey }, (res) => {
-                                if (res?.success) alert('Pro Status Synced!');
-                            });
-                        }, { capture: true });
+                    // Find Pro buttons to update text
+                    document.querySelectorAll('a, [data-framer-name]').forEach(el => {
+                        if (isPricingButton(el) && isProButton(el)) {
+                            updateBtnText(el, 'Sync Pro Status');
+                            el.style.background = '#10b981';
+                        }
                     });
                     return;
                 }
@@ -66,11 +101,13 @@ async function init() {
 
     const user = await extpay.getUser();
     if (user.paid) {
-        const pricingButtons = document.querySelectorAll('.pricing-button');
-        pricingButtons.forEach(btn => {
-            updateBtnText(btn, btn.classList.contains('btn-pro') ? 'Current Plan' : 'Free Tier');
-            btn.style.pointerEvents = 'none';
-            btn.style.opacity = '0.7';
+        document.querySelectorAll('a, [data-framer-name]').forEach(el => {
+            if (isPricingButton(el)) {
+                const isPro = isProButton(el);
+                updateBtnText(el, isPro ? 'Current Plan' : 'Free Tier');
+                el.style.pointerEvents = 'none';
+                el.style.opacity = '0.7';
+            }
         });
     }
 }
