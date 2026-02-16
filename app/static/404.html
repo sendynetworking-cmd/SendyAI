@@ -1,20 +1,90 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404</title>
-    <link rel="stylesheet" href="/static/css/404.css">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>404 — Sendy AI</title>
+    <meta name="description" content="Page not found — Sendy AI">
+    <link href="/static/images/icon48.png" rel="icon" type="image/x-icon">
+    <link rel="stylesheet" href="/static/styles.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="code">404</div>
-        <h1>Page Not Found</h1>
-        <p class="description">This page doesn't exist.</p>
-        <a href="/" class="btn">Go Home</a>
-    </div>
+
+    <!-- ========== NAVBAR ========== -->
+    <header class="navbar" id="navbar">
+        <div class="navbar-inner">
+            <a class="navbar-logo" href="./">
+                <img src="/static/images/sendyclearbackground.png" alt="Sendy logo">
+            </a>
+            <nav>
+                <ul class="navbar-links">
+                    <li><a href="./#features">Features</a></li>
+                    <li><a href="./#pricing">Pricing</a></li>
+                    <li><a href="./#testimonials">Testimonials</a></li>
+                    <li><a href="./#faq">FAQ</a></li>
+                </ul>
+            </nav>
+            <a class="btn-primary" href="./">Go Home</a>
+            <button class="navbar-toggle" aria-label="Toggle menu">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- ========== 404 CONTENT ========== -->
+    <section class="hero" id="hero" style="min-height: 60vh; display: flex; align-items: center;">
+        <div class="container" style="text-align: center;">
+            <h1 style="font-size: 6rem; margin-bottom: 0.25em;">404</h1>
+            <p class="hero-subtitle" style="font-size: 1.5rem; margin-bottom: 2rem;">This page doesn't exist.</p>
+            <a class="btn-primary" href="./">Go Home</a>
+        </div>
+    </section>
+
+    <!-- ========== FOOTER ========== -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-card">
+                <div class="footer-inner">
+                    <div class="footer-brand">
+                        <a class="navbar-logo" href="./">
+                            <img src="/static/images/sendyclearbackground.png" alt="Sendy logo">
+                        </a>
+                        <p>Our comprehensive course is designed to empower your organization by simplifying complex
+                            processes,
+                            fostering seamless collaboration.</p>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Pages</h4>
+                        <ul>
+                            <li><a href="./#features">Features</a></li>
+                            <li><a href="./#pricing">Pricing</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Resources</h4>
+                        <ul>
+                            <li><a href="./contact">Contact</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Utility Pages</h4>
+                        <ul>
+                            <li><a href="./privacy-policy">Privacy Policy</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelector('.navbar-toggle')?.addEventListener('click', () => {
+            document.getElementById('navbar').classList.toggle('open');
+        });
+    </script>
+
 </body>
 
 </html>
