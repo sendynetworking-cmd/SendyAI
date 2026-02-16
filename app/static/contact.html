@@ -20,7 +20,7 @@
       </a>
       <nav>
         <ul class="navbar-links">
-          <li><a href="./#features">Features</a></li>
+          <li><a href="./#how-it-works">Features</a></li>
           <li><a href="./#pricing">Pricing</a></li>
           <li><a href="./#testimonials">Testimonials</a></li>
           <li><a href="./#faq">FAQ</a></li>
@@ -43,8 +43,7 @@
 
   <section class="how-it-works">
     <div class="container" style="max-width: 640px;">
-      <form class="contact-form" action="https://formspree.io/f/xzzpzopd" method="POST"
-        style="display: flex; flex-direction: column; gap: 1.25rem;">
+      <form id="contact-form" style="display: flex; flex-direction: column; gap: 1.25rem;">
 
         <label style="display:flex; flex-direction:column; gap:0.4rem; font-weight:600; color:var(--text);">
           Name
@@ -64,8 +63,10 @@
             style="padding: 0.75rem 1rem; border-radius: 12px; border: 1px solid rgba(51,99,255,.2); font-size: 1rem; background: rgba(255,255,255,.6); backdrop-filter:blur(6px); resize: vertical; outline:none;"></textarea>
         </label>
 
-        <button type="submit" class="btn-primary"
+        <button type="submit" class="btn-primary" id="contact-submit"
           style="align-self: stretch; padding: 0.85rem; font-size: 1.05rem; cursor:pointer;">Submit</button>
+
+        <div id="contact-status" style="text-align:center; font-weight:600; display:none;"></div>
       </form>
     </div>
   </section>
@@ -85,7 +86,7 @@
           <div class="footer-col">
             <h4>Pages</h4>
             <ul>
-              <li><a href="./#features">Features</a></li>
+              <li><a href="./#how-it-works">Features</a></li>
               <li><a href="./#pricing">Pricing</a></li>
             </ul>
           </div>
@@ -109,6 +110,38 @@
   <script>
     document.querySelector('.navbar-toggle')?.addEventListener('click', () => {
       document.getElementById('navbar').classList.toggle('open');
+    });
+
+    document.getElementById('contact-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const btn = document.getElementById('contact-submit');
+      const status = document.getElementById('contact-status');
+      const data = Object.fromEntries(new FormData(form));
+
+      btn.disabled = true;
+      btn.textContent = 'Sending...';
+      status.style.display = 'none';
+
+      try {
+        const res = await fetch('/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        const json = await res.json();
+        status.textContent = '✅ ' + json.message;
+        status.style.color = '#16a34a';
+        status.style.display = 'block';
+        form.reset();
+      } catch (err) {
+        status.textContent = '❌ Something went wrong. Please try again.';
+        status.style.color = '#dc2626';
+        status.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit';
+      }
     });
   </script>
 

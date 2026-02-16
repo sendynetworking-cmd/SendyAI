@@ -167,6 +167,31 @@ body::before {
     box-shadow: var(--shadow-btn), 0 4px 12px rgba(67, 83, 255, 0.25);
 }
 
+.btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 12px 28px;
+    font-size: 15px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    color: var(--color-primary);
+    background: transparent;
+    border: 2px solid var(--color-primary);
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.btn-secondary:hover {
+    background: var(--color-primary);
+    color: var(--color-white);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(67, 83, 255, 0.25);
+}
+
 /* ============================================
    NAVBAR
    ============================================ */
@@ -232,6 +257,11 @@ body::before {
     padding: 9px 20px;
     font-size: 13px;
     border-width: 2px;
+}
+
+.navbar .btn-secondary {
+    padding: 9px 20px;
+    font-size: 13px;
 }
 
 /* Mobile menu toggle */

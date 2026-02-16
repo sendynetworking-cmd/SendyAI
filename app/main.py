@@ -1,10 +1,12 @@
 import logging
 import os
+from datetime import datetime, timezone
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from .routers import onboarding, user, outreach, search, usage
+from .core.clients import supabase
 from pydantic import BaseModel
 
 # Logging
@@ -90,9 +92,39 @@ async def not_found():
 
 @app.post("/contact")
 async def post_contact(request: ContactRequest):
-    logger.info(f"Contact form submission: {request}")
-    # Future: send email or store in DB
-    return {"status": "success", "message": "Thank you for your message! We will get back to you soon."}
+    logger.info(f"Contact form submission from: {request.name} <{request.email}>")
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+
+        app_password = os.getenv("GMAIL_APP_PASSWORD")
+        to_email = "sendynetworking@gmail.com"
+
+        subject = f"Sendy Contact Form: {request.name}"
+        body = (
+            f"Name: {request.name}\n"
+            f"Email: {request.email}\n\n"
+            f"Message:\n{request.message}"
+        )
+
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = to_email
+        msg["To"] = to_email
+        msg["Reply-To"] = request.email
+
+        if app_password:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                server.login(to_email, app_password)
+                server.send_message(msg)
+            logger.info("Contact email sent successfully")
+        else:
+            logger.warning("GMAIL_APP_PASSWORD not set — contact submission logged only")
+
+        return {"status": "success", "message": "Thank you for your message! We'll get back to you soon."}
+    except Exception as e:
+        logger.error(f"Error sending contact email: {e}")
+        return {"status": "success", "message": "Thank you for your message! We'll get back to you soon."}
 
 if __name__ == "__main__":
     import uvicorn

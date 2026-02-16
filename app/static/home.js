@@ -28,12 +28,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }, { capture: true });
 
-    // If user is already paid, update button states
+    // Manage Subscription button opens ExtensionPay management page
+    document.querySelectorAll('.manage-sub-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (extpay) {
+                try {
+                    extpay.openPaymentPage();
+                } catch (err) {
+                    console.error('[Home] Manage subscription error:', err);
+                }
+            }
+        });
+    });
+
+    // If user is already paid, update only pricing-card buttons (not hero CTAs)
     if (extpay) {
         try {
             const user = await extpay.getUser();
             if (user.paid) {
-                document.querySelectorAll('.pricing-btn').forEach(btn => {
+                document.querySelectorAll('.pricing-card .pricing-btn').forEach(btn => {
                     const isPro = btn.closest('.pricing-card.featured') !== null;
                     btn.textContent = isPro ? 'Current Plan' : 'Free Tier';
                     btn.style.pointerEvents = 'none';
