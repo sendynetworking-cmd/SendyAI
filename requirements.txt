@@ -4,7 +4,7 @@ pdfplumber
 python-docx
 supabase
 python-dotenv
-google-genai
+anthropic
 pydantic
 pydantic-settings
 python-multipart

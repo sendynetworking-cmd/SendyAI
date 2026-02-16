@@ -3,7 +3,7 @@ import traceback
 from fastapi import APIRouter, Depends, HTTPException, Header
 from .usage import verify_usage
 from ..schemas.profile import OutreachRequest
-from ..core.clients import supabase, genai_client
+from ..core.clients import supabase, anthropic_client
 from ..core.auth import get_user_id
 from ..core.config import settings
 
@@ -20,7 +20,7 @@ async def generate_outreach(
     Generate outreach email for a given recipient profile
     '''
     
-    if not supabase or not genai_client:
+    if not supabase or not anthropic_client:
         raise HTTPException(status_code=500, detail="Services not configured")
 
     # Lookup user profile
@@ -76,7 +76,9 @@ async def generate_outreach(
     ⚠️ CRITICAL OUTPUT RULE:
     Output ONLY the raw email text. DO NOT include any structural labels or markers (e.g., "SUBJECT LINE:", "PARAGRAPH 1:").
     Output ONLY the final email text (subject line + body). No placeholders.
+    """
 
+    user_message = f"""
     YOUR TASK:
     Perform a two-step process internally, then output ONLY the final email text with NO LABELS.
 
@@ -123,14 +125,18 @@ async def generate_outreach(
     """
 
     try:
-        response = genai_client.models.generate_content(
-            model=settings.GEMINI_MODEL,
-            contents=system_prompt
+        response = anthropic_client.messages.create(
+            model=settings.ANTHROPIC_MODEL,
+            max_tokens=1024,
+            system=system_prompt,
+            messages=[
+                {"role": "user", "content": user_message}
+            ]
         )
         
         return {
             "success": True,
-            "email": response.text
+            "email": response.content[0].text
         }
     except Exception as e:
         logger.error(f"Generation error: {e}")

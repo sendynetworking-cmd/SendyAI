@@ -8,7 +8,7 @@ import traceback
 import pdfplumber
 from docx import Document
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from ..core.clients import genai_client
+from ..core.clients import anthropic_client
 from ..core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -37,7 +37,7 @@ def extract_text_from_docx(path):
 @router.post("/parse")
 async def parse_resume(file: UploadFile = File(...)):
     '''
-    Parse resume file and extract relevant information using Gemini
+    Parse resume file and extract relevant information using Claude
     '''
 
     temp_dir = tempfile.mkdtemp()
@@ -58,9 +58,9 @@ async def parse_resume(file: UploadFile = File(...)):
         if not text.strip():
             raise ValueError("Could not extract any text from the file.")
 
-        # Use Gemini for Parsing
-        if not genai_client:
-            raise HTTPException(status_code=500, detail="Gemini client not initialized")
+        # Use Claude for Parsing
+        if not anthropic_client:
+            raise HTTPException(status_code=500, detail="Anthropic client not initialized")
 
         prompt = f"""
         Analyze the following resume text and extract information into a VALID JSON format.
@@ -84,23 +84,26 @@ async def parse_resume(file: UploadFile = File(...)):
         }}
 
         RESUME TEXT:
-        {text[:10000]} # Limit text length for safety
+        {text[:10000]}
         """
 
         try:
-            response = genai_client.models.generate_content(
-                model="gemini-2.0-flash",
-                contents=prompt
+            response = anthropic_client.messages.create(
+                model=settings.ANTHROPIC_MODEL,
+                max_tokens=2048,
+                system="You are a resume parser. Output only valid JSON, no other text.",
+                messages=[
+                    {"role": "user", "content": prompt}
+                ]
             )
             
             # Extract JSON from response
-            raw_response = response.text
+            raw_response = response.content[0].text
             json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
             if json_match:
                 parsed_data = json.loads(json_match.group(0))
             else:
-                # Fallback if no JSON-like structure is found
-                logger.error(f"Gemini failed to return JSON. Raw response: {raw_response}")
+                logger.error(f"Claude failed to return JSON. Raw response: {raw_response}")
                 raise ValueError("AI failed to parse resume structure")
 
             # Final response mapping with fallbacks
@@ -115,11 +118,11 @@ async def parse_resume(file: UploadFile = File(...)):
                 "raw_summary": f"Professional profile with {len(parsed_data.get('experiences', []))} roles identified."
             }
             
-            logger.info(f"Successfullyparsed resume for: {response_data['name']}")
+            logger.info(f"Successfully parsed resume for: {response_data['name']}")
             return response_data
 
         except Exception as e:
-            logger.error(f"Gemini parsing error: {e}")
+            logger.error(f"Claude parsing error: {e}")
             raise HTTPException(status_code=500, detail="AI parsing failed")
 
     except Exception as e:

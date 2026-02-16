@@ -1,6 +1,6 @@
 import logging
 import requests as py_requests
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Header
 from ..core.clients import supabase
 from ..core.auth import get_user_id
@@ -8,10 +8,9 @@ from ..core.auth import get_user_id
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/usage", tags=["usage"])
 
-def get_current_monday_utc():
+def get_current_month_start_utc():
     now = datetime.now(timezone.utc)
-    monday = now - timedelta(days=now.weekday())
-    return monday.replace(hour=0, minute=0, second=0, microsecond=0)
+    return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
 @router.get("/status")
 async def get_usage_status(
@@ -27,7 +26,7 @@ async def fetch_usage_stats(user_id: str, extpay_key: str = None):
     if not supabase:
         raise HTTPException(status_code=500, detail="Supabase not configured")
 
-    monday = get_current_monday_utc()
+    month_start = get_current_month_start_utc()
     
     # 1. Get User Tier from ExtensionPay (Source of Truth)
     tier = "free"
@@ -50,28 +49,28 @@ async def fetch_usage_stats(user_id: str, extpay_key: str = None):
         except Exception as e:
             logger.error(f"Error calling ExtensionPay API: {e}")
 
-    # 2. Query usage_logs for the current week
+    # 2. Query usage_logs for the current month
     usage_res = supabase.table("usage_logs") \
         .select("id", count="exact") \
         .eq("user_id", user_id) \
-        .gte("date_accessed", monday.isoformat()) \
+        .gte("date_accessed", month_start.isoformat()) \
         .execute()
     
     count = usage_res.count if usage_res.count is not None else 0
     
-    # Tier Limits
+    # Tier Limits (monthly)
     limits = {
-        "free": 3,
-        "pro": 50
+        "free": 10,
+        "pro": 250
     }
-    limit = limits.get(tier, 3)
+    limit = limits.get(tier, 10)
 
     return {
         "tier": tier,
         "creditsCount": count,
         "creditsRemaining": max(0, limit - count),
         "limit": limit,
-        "lastWeekReset": monday.isoformat()
+        "monthReset": month_start.isoformat()
     }
 
 async def verify_usage(user_id: str, extpay_key: str = None):
@@ -83,6 +82,6 @@ async def verify_usage(user_id: str, extpay_key: str = None):
     if stats["creditsRemaining"] <= 0:
         raise HTTPException(
             status_code=403, 
-            detail=f"Weekly limit reached ({stats['limit']} credits). Please upgrade or wait for the new week."
+            detail=f"Monthly limit reached ({stats['limit']} credits). Please upgrade or wait for the new month."
         )
     return stats
