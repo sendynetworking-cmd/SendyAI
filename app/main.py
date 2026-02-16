@@ -100,7 +100,7 @@ async def post_contact(request: ContactRequest):
         app_password = os.getenv("GMAIL_APP_PASSWORD")
         to_email = "sendynetworking@gmail.com"
 
-        subject = f"Sendy Contact Form: {request.name}"
+        subject = f"[SENDY CONTACT FORM]: {request.name}"
         body = (
             f"Name: {request.name}\n"
             f"Email: {request.email}\n\n"
