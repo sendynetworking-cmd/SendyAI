@@ -7,7 +7,7 @@ from ..core.auth import get_user_id
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/user", tags=["user"])
 
-@router.get("/profile")
+@router.get("/profile/me")
 async def get_profile(user_id: str = Depends(get_user_id)):
     '''
     Fetch existing user profile from Supabase
