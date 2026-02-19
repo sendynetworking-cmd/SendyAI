@@ -7,6 +7,22 @@ from ..core.auth import get_user_id
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/user", tags=["user"])
 
+@router.get("/profile")
+async def get_profile(user_id: str = Depends(get_user_id)):
+    '''
+    Fetch existing user profile from Supabase
+    '''
+    if not supabase:
+        raise HTTPException(status_code=500, detail="Supabase not configured")
+    try:
+        result = supabase.table("profiles").select("*").eq("id", user_id).single().execute()
+        if result.data:
+            return {"success": True, "profile": result.data}
+        return {"success": False, "profile": None}
+    except Exception as e:
+        logger.info(f"No existing profile found for {user_id}: {e}")
+        return {"success": False, "profile": None}
+
 @router.post("/profile")
 async def save_profile(profile: ProfileUpdate, user_id: str = Depends(get_user_id)):
     '''
